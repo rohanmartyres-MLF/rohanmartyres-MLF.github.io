@@ -1,0 +1,977 @@
+import json
+
+# Google Sheets CSV URLs (published to web)
+ELEMENTS_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJBJjfHVzeooUl9Z2fMJI6e9h_NvOme7GN4k59X0BAkQ0eikwHXokOeCLJX8nS3Q/pub?gid=1554973704&single=true&output=csv'
+CONNECTIONS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJBJjfHVzeooUl9Z2fMJI6e9h_NvOme7GN4k59X0BAkQ0eikwHXokOeCLJX8nS3Q/pub?gid=740560254&single=true&output=csv'
+
+# Embed fallback JSON so the file works offline too
+with open('/home/claude/elements_final.json') as f: EL = json.load(f)
+with open('/home/claude/connections_final.json') as f: CN = json.load(f)
+FALLBACK_EL_JS = json.dumps(EL, ensure_ascii=False)
+FALLBACK_CN_JS = json.dumps(CN, ensure_ascii=False)
+
+HTML = '''<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Fostering Future-Fit Leadership — Menzies Leadership Foundation</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0f1f35;--navy2:#172844;--gold:#c8963e;--gold-light:#e8b96a;--cream:#f7f3ed;--cream2:#ede7dd;--slate:#4a5d73;--sl:#7a8fa6;--text:#1a2635;--textm:#4a5568;--textd:#8898aa;--cc:#3b9ede;--ci:#e8b84a;--ce:#5cb85c;--cy:#e87c3e;--ca:#d9534f}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM Sans',sans-serif}
+#app{width:100vw;height:100vh;display:flex;flex-direction:column}
+#slides{flex:1;min-height:0;position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .5s;display:flex;flex-direction:column;overflow:hidden}
+.slide.active{opacity:1;pointer-events:all}
+#nav{background:var(--navy);border-top:1px solid rgba(200,150,62,.2);padding:10px 32px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:100}
+.nav-dots{display:flex;gap:8px;align-items:center}
+.nav-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2);border:none;cursor:pointer;transition:background .25s,transform .25s;padding:0}
+.nav-dot.active{background:var(--gold);transform:scale(1.3)}
+.nav-btn{background:transparent;border:1px solid rgba(200,150,62,.35);color:var(--gold-light);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:7px 20px;border-radius:3px;cursor:pointer;transition:background .2s}
+.nav-btn:hover{background:rgba(200,150,62,.1);border-color:var(--gold)}
+.nav-btn:disabled{opacity:.3;cursor:default}
+.nav-lbl{color:var(--sl);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+/* TEXT SLIDES */
+.ts{background:var(--cream);align-items:center;justify-content:center}
+.ti{max-width:740px;width:90%;padding:48px 0}
+.ey{font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:20px}
+.h1{font-family:'Libre Baskerville',serif;font-size:clamp(26px,3.5vw,40px);font-weight:700;color:var(--text);line-height:1.2;margin-bottom:28px}
+.bd{font-size:16px;color:var(--textm);line-height:1.85}
+.bd p{margin-bottom:16px}
+.bd ol,.bd ul{padding-left:22px;margin:12px 0 16px}
+.bd li{margin-bottom:12px}
+.bd b{color:var(--text);font-weight:600}
+.bd a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(200,150,62,.3)}
+.dv{width:48px;height:2px;background:var(--gold);margin:28px 0;border-radius:1px}
+.wm{font-size:11px;color:var(--textd);margin-top:40px}
+.igrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+.icard{background:white;border:1px solid var(--cream2);border-radius:6px;padding:18px 20px;display:flex;gap:14px;align-items:flex-start}
+.iico{width:32px;height:32px;border-radius:50%;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;font-weight:600}
+.itxt{font-size:14px;color:var(--textm);line-height:1.6}
+.itxt b{color:var(--text)}
+/* MAP SHARED */
+.mhdr{background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.07);padding:8px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0;z-index:10}
+.fbg{display:flex;gap:6px}
+.fb{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.5);padding:5px 14px;border-radius:2px;cursor:pointer;transition:all .2s}
+.fb.active,.fb:hover{background:rgba(200,150,62,.15);border-color:var(--gold);color:var(--gold-light)}
+.cfb{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.45);padding:4px 12px;border-radius:2px;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif}
+.cfb.active{border-color:currentColor}
+.cfb[data-cat="all"].active{background:rgba(200,150,62,.15);border-color:var(--gold);color:var(--gold-light)}
+.cfb[data-cat="Community resilience"].active{color:var(--cc);background:rgba(59,158,222,.1)}
+.cfb[data-cat="Education outcomes"].active{color:var(--ce);background:rgba(92,184,92,.1)}
+.cfb[data-cat="Indigenous self-determination"].active{color:var(--ci);background:rgba(232,184,74,.1)}
+.cfb[data-cat="Youth development"].active{color:var(--cy);background:rgba(232,124,62,.1)}
+.cfb[data-cat="Insight and influence"].active{color:var(--ca);background:rgba(217,83,79,.1)}
+.lgd{position:absolute;bottom:16px;left:16px;z-index:50;background:rgba(10,22,40,.85);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:12px 16px}
+.lgd-t{font-size:9px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:8px}
+.lgd-i{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:11px;color:rgba(255,255,255,.6)}
+.lgd-s{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.lgd-s.sq{border-radius:2px}
+.zc{position:absolute;top:12px;right:16px;z-index:50;display:flex;flex-direction:column;gap:4px}
+.zb{width:28px;height:28px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:3px;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;font-family:monospace;line-height:1;position:relative}
+.zb:hover{background:rgba(200,150,62,.2);border-color:var(--gold)}
+.zb[data-tip]::after{content:attr(data-tip);position:absolute;right:34px;top:50%;transform:translateY(-50%);background:var(--navy2);border:1px solid rgba(200,150,62,.3);color:rgba(255,255,255,.9);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;white-space:nowrap;padding:4px 9px;border-radius:4px;pointer-events:none;opacity:0;transition:opacity 0s}
+.zb[data-tip]:hover::after{opacity:1;transition:opacity 0s}
+/* SLIDE 4 */
+#slide4{background:var(--navy)}
+#loi-canvas{flex:1;min-height:0;width:100%;overflow:hidden;position:relative;cursor:grab}
+#loi-canvas:active{cursor:grabbing}
+#loi-svg{width:100%;height:100%;display:block}
+/* SLIDE 5 */
+#slide5{background:#0a1628}
+#net-canvas{flex:1;min-height:0;width:100%;position:relative;overflow:hidden;cursor:grab}
+#net-canvas:active{cursor:grabbing}
+#net-svg{width:100%;height:100%;display:block}
+/* TOOLTIP */
+#tt{position:fixed;z-index:9999;max-width:340px;min-width:220px;background:var(--navy2);border:1px solid rgba(200,150,62,.3);border-radius:6px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.5);opacity:0;transition:opacity .15s;pointer-events:none;max-height:75vh;overflow-y:auto}
+#tt.vis{opacity:1;pointer-events:all}
+#tt .ttype{font-size:9px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+#tt .ttitle{font-family:'Libre Baskerville',serif;font-size:14px;color:white;margin-bottom:8px;line-height:1.35}
+#tt .tbody{font-size:12px;color:rgba(255,255,255,.65);line-height:1.65}
+#tt .tbody b,#tt .tbody strong{color:rgba(255,255,255,.9);font-weight:600}
+#tt .tbody a{color:var(--gold-light)}
+#tt .tbody ul,#tt .tbody ol{padding-left:16px;margin:4px 0}
+#tt .tbody li{margin-bottom:2px}
+#tt .tlists{margin-top:12px;border-top:1px solid rgba(255,255,255,.1);padding-top:10px;display:flex;flex-direction:column;gap:10px}
+#tt .tlt{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+#tt .tchips{display:flex;flex-wrap:wrap;gap:4px}
+#tt .tchip{font-size:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:3px;padding:3px 7px;color:rgba(255,255,255,.75);line-height:1.4;cursor:pointer;transition:background .15s,border-color .15s}
+#tt .tchip:hover{background:rgba(200,150,62,.2);border-color:rgba(200,150,62,.5)}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="slides">
+  <div class="slide ts active" id="slide1"><div class="ti">
+   <div class="ey">Menzies Leadership Foundation · 2025</div>
+   <h1 class="h1">Fostering future-fit leadership</h1><div class="dv"></div>
+   <div class="bd"><p>Humanity's astounding progress through the Industrial and Technological revolutions has created an immense challenge and opportunity for the 21st century.</p><p>Navigating this in Australia requires:</p>
+   <ol><li><b>A leadership hypothesis:</b> A diagnosis of the leadership challenges for the 21st century, and a hypothesis on how to address them; and,</li>
+   <li><b>A future-fit Australia:</b> Strategies to cultivate future-fit leadership for all Australians.</li></ol></div>
+  </div></div>
+  <div class="slide ts" id="slide2"><div class="ti">
+   <div class="ey">Overview</div><h1 class="h1">Navigating the challenge</h1><div class="dv"></div>
+   <div class="bd"><p>The following maps outline different aspects of the leadership hypothesis, strategy and opportunities for impact identified by the <a href="https://menziesfoundation.org.au" target="_blank">Menzies Leadership Foundation</a>.</p>
+   <p>In aggregate, the maps outline the connections between:</p>
+   <ul><li>Different <b>lines of inquiry</b> to understand leadership</li><li><b>Priority cohorts</b> to cultivate Australian leadership</li>
+   <li><b>Systemic levers</b> for impact at scale</li><li><b>Initiatives</b> to foster future-fit leadership</li>
+   <li><b>Outputs</b> of our and partners' collective endeavours</li></ul></div>
+  </div></div>
+  <div class="slide ts" id="slide3"><div class="ti">
+   <div class="ey">Guide</div><h1 class="h1">Using the maps</h1><div class="dv"></div>
+   <div class="igrid">
+    <div class="icard"><div class="iico">⊕</div><div class="itxt"><b>Zoom</b> in and out using the + and − buttons at top right of each map.</div></div>
+    <div class="icard"><div class="iico">⊞</div><div class="itxt"><b>Filter</b> items using the category and year buttons at the top of each map.</div></div>
+    <div class="icard"><div class="iico">◎</div><div class="itxt"><b>Click</b> any element to see its description and highlight direct connections.</div></div>
+    <div class="icard"><div class="iico">⇄</div><div class="itxt"><b>Navigate</b> slides using the Back and Next buttons below.</div></div>
+   </div>
+  </div></div>
+  <div class="slide" id="slide4">
+   <div class="mhdr">
+    <div class="fbg" id="loi-filters">
+     <button class="fb active" data-show="all">All</button>
+     <button class="fb" data-show="Level of Leadership">Lines of Inquiry</button>
+     <button class="fb" data-show="Initiative">Initiatives</button>
+     <button class="fb" data-show="Partner">Partners</button>
+    </div>
+   </div>
+   <div id="loi-canvas">
+    <svg id="loi-svg"></svg>
+    <div class="lgd">
+     <div class="lgd-t">Legend</div>
+     <div class="lgd-i"><span class="lgd-s sq" style="background:var(--cc);"></span> Community resilience</div>
+     <div class="lgd-i"><span class="lgd-s sq" style="background:var(--ci);"></span> Indigenous self-det.</div>
+     <div class="lgd-i"><span class="lgd-s sq" style="background:var(--ce);"></span> Education outcomes</div>
+     <div class="lgd-i"><span class="lgd-s sq" style="background:var(--cy);"></span> Youth development</div>
+     <div class="lgd-i"><span class="lgd-s sq" style="background:var(--ca);"></span> Insight &amp; influence</div>
+    </div>
+    <div class="zc"><button class="zb" id="loi-zi" data-tip="Zoom in">+</button><button class="zb" id="loi-zo" data-tip="Zoom out">−</button><button class="zb" id="loi-zf" style="font-size:11px;" data-tip="Reset view">⊡</button></div>
+   </div>
+  </div>
+  <div class="slide" id="slide5">
+   <div class="mhdr" style="flex-direction:column;align-items:flex-start;gap:6px;">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+     <div class="fbg">
+      <button class="fb active" data-type="all">All components</button>
+      <button class="fb" data-type="Cohort">Cohorts</button>
+      <button class="fb" data-type="Lever">Levers</button>
+      <button class="fb" data-type="Initiative">Initiatives</button>
+      <button class="fb" data-type="Output">Outputs</button>
+      <button class="fb" data-type="Partner">Partners</button>
+     </div>
+     <div style="width:1px;height:18px;background:rgba(255,255,255,.1);"></div>
+     <div class="fbg" id="cat-filters">
+      <button class="cfb active" data-cat="all">All categories</button>
+      <button class="cfb" data-cat="Community resilience">Community resilience</button>
+      <button class="cfb" data-cat="Education outcomes">Education outcomes</button>
+      <button class="cfb" data-cat="Indigenous self-determination">Indigenous self-det.</button>
+      <button class="cfb" data-cat="Youth development">Youth development</button>
+      <button class="cfb" data-cat="Insight and influence">Insight &amp; influence</button>
+     </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+     <div class="fbg" id="year-filters">
+      <button class="fb active" data-year="all">All years</button>
+      <button class="fb" data-year="pre2022">Pre 2022</button>
+      <button class="fb" data-year="2022">2022</button>
+      <button class="fb" data-year="2023">2023</button>
+      <button class="fb" data-year="2024">2024</button>
+      <button class="fb" data-year="2025">2025</button>
+      <button class="fb" data-year="2026">2026</button>
+     </div>
+    </div>
+   </div>
+   <div id="net-canvas">
+    <svg id="net-svg"></svg>
+    <div class="lgd">
+     <div class="lgd-t">Legend</div>
+     <div class="lgd-i"><span class="lgd-s" style="background:var(--cc);"></span> Community resilience</div>
+     <div class="lgd-i"><span class="lgd-s" style="background:var(--ci);"></span> Indigenous self-det.</div>
+     <div class="lgd-i"><span class="lgd-s" style="background:var(--ce);"></span> Education outcomes</div>
+     <div class="lgd-i"><span class="lgd-s" style="background:var(--cy);"></span> Youth development</div>
+     <div class="lgd-i"><span class="lgd-s" style="background:var(--ca);"></span> Insight &amp; influence</div>
+    </div>
+    <div class="zc"><button class="zb" id="net-zi" data-tip="Zoom in">+</button><button class="zb" id="net-zo" data-tip="Zoom out">−</button><button class="zb" id="net-zf" style="font-size:11px;" data-tip="Reset view">⊡</button></div>
+   </div>
+  </div>
+  <div class="slide ts" id="slide6"><div class="ti">
+   <div class="ey">Further reading</div><h1 class="h1">Learn more</h1><div class="dv"></div>
+   <div class="bd"><p>To learn more about future-fit leadership, visit the <a href="https://menziesfoundation.org.au" target="_blank">Menzies Leadership Foundation</a>.</p>
+   <p>The Menzies Leadership Foundation works at the intersection of practice, policy and culture through three priorities:</p>
+   <ul><li><b>Innovation</b> — Catalysing partnerships that build leadership capability.</li>
+   <li><b>Insights</b> — Synthesising research and data to advance the field of leadership in complexity.</li>
+   <li><b>Influence</b> — Elevating public narratives on leadership, integrity and collective responsibility.</li></ul></div>
+   <div class="wm">Last updated March 2026</div>
+  </div></div>
+ </div>
+ <div id="nav">
+  <button class="nav-btn" id="btn-back">← Back</button>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+   <div class="nav-dots" id="nav-dots"></div>
+   <div class="nav-lbl" id="nav-lbl"></div>
+  </div>
+  <button class="nav-btn" id="btn-next">Next →</button>
+ </div>
+</div>
+<div id="tt"><div class="ttype" id="tt-type"></div><div class="ttitle" id="tt-title"></div><div class="tbody" id="tt-body"></div></div>
+<div id="loading" style="position:fixed;inset:0;background:var(--navy);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+  <div style="font-family:'Libre Baskerville',serif;font-size:22px;color:var(--gold-light);letter-spacing:.05em;">Fostering Future-Fit Leadership</div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <div class="spin" style="width:18px;height:18px;border:2px solid rgba(200,150,62,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;"></div>
+    <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(255,255,255,.45);letter-spacing:.06em;" id="load-msg">Loading data…</span>
+  </div>
+  <div id="load-err" style="font-size:12px;color:rgba(217,83,79,.8);display:none;max-width:400px;text-align:center;"></div>
+</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+<script>
+// ── Google Sheets live data feed ──────────────────────────────────────────
+const ELEMENTS_URL    = 'ELEMENTS_URL_PLACEHOLDER';
+const CONNECTIONS_URL = 'CONNECTIONS_URL_PLACEHOLDER';
+
+// Offline fallback (last-known-good snapshot)
+const FALLBACK_ELEMENTS    = FALLBACK_EL_PLACEHOLDER;
+const FALLBACK_CONNECTIONS = FALLBACK_CN_PLACEHOLDER;
+
+let ELEMENTS = {}, CONNECTIONS = [];
+
+const CONN_TYPE_MAP = {
+  'Initiative Contribution': 'Level of Leadership',
+  'Lever Contribution':      'Lever',
+  'Output Contribution':     'Output',
+  'Partner Contribution':    'Partner',
+  'Workstream Contribution': 'Workstream',
+  'Hypothesis':              'Hypothesis',
+};
+
+function parseCSV(text) {
+  const rows = []; let row = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '"') { if (inQ && text[i+1]==='"'){field+='"';i++;}else inQ=!inQ; }
+    else if (ch === ',' && !inQ) { row.push(field); field = ''; }
+    else if ((ch==='\\n'||ch==='\\r') && !inQ) {
+      if (ch==='\\r' && text[i+1]==='\\n') i++;
+      row.push(field); if(row.some(f=>f.trim())) rows.push(row);
+      row=[]; field='';
+    } else field += ch;
+  }
+  if (field||row.length){row.push(field);if(row.some(f=>f.trim()))rows.push(row);}
+  return rows;
+}
+
+function csvToObjects(text) {
+  const rows = parseCSV(text); if (!rows.length) return [];
+  const headers = rows[0].map(h => h.trim());
+  return rows.slice(1).map(row => {
+    const obj = {}; headers.forEach((h,i) => obj[h] = (row[i]||'').trim()); return obj;
+  }).filter(r => r[headers[0]]);
+}
+
+function buildElements(rows) {
+  const out = {};
+  for (const r of rows) {
+    if (!r.Label) continue;
+    const tags = r.Tags || '';
+    const years = [...tags.matchAll(/\\b(20[12]\\d)\\b/g)].map(m=>parseInt(m[1]));
+    let desc = r.Description || '';
+    const url = r.URL || '';
+    // Append URL as linked "here" if description ends with plain-text "here." and has a URL
+    if (url) {
+      desc = desc.replace(
+        /((?:Read|Watch|Access|View|Listen to|Learn more\\b)[^\\n<]{0,60}?)here\\.\\s*$/i,
+        `$1<a href="${url}" style="color:#3eb5ea;" target="_blank">here</a>.`
+      );
+      // If no link phrase found and no existing href, append generic learn more
+      if (!desc.includes('href=') && desc.trim()) {
+        desc = desc.trimEnd() + `\n\nLearn more <a href="${url}" style="color:#3eb5ea;" target="_blank">here</a>.`;
+      }
+    }
+    out[r.Label] = {
+      type: r.Type || '',
+      category: r.Category || '',
+      size: parseFloat(r.Size) || 1,
+      description: desc,
+      years: [...new Set(years)].sort(),
+    };
+  }
+  return out;
+}
+
+function buildConnections(rows) {
+  return rows.filter(r => r.From && r.To).map(r => ({
+    from: r.From, to: r.To,
+    type: CONN_TYPE_MAP[r.Type] || r.Type || '',
+    size: parseInt(r.Size) || 1,
+  }));
+}
+
+async function loadSheetData() {
+  try {
+    // Use XMLHttpRequest as fallback — more reliable from file:// origins than fetch()
+    function xhrGet(url) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.timeout = 15000;
+        xhr.onload  = () => xhr.status >= 200 && xhr.status < 300 ? resolve(xhr.responseText) : reject(new Error('HTTP ' + xhr.status));
+        xhr.onerror = () => reject(new Error('Network error — are you online?'));
+        xhr.ontimeout = () => reject(new Error('Request timed out'));
+        xhr.send();
+      });
+    }
+    const [elText, cnText] = await Promise.all([
+      xhrGet(ELEMENTS_URL),
+      xhrGet(CONNECTIONS_URL),
+    ]);
+    const elRows = csvToObjects(elText);
+    const cnRows = csvToObjects(cnText);
+    if (!elRows.length) throw new Error('Elements sheet appears empty');
+    ELEMENTS    = buildElements(elRows);
+    CONNECTIONS = buildConnections(cnRows);
+    console.log('✓ Loaded live data:', Object.keys(ELEMENTS).length, 'elements,', CONNECTIONS.length, 'connections');
+    return {ok: true};
+  } catch(e) {
+    console.warn('Live data fetch failed:', e.message);
+    ELEMENTS    = FALLBACK_ELEMENTS;
+    CONNECTIONS = FALLBACK_CONNECTIONS;
+    return {ok: false, error: e.message};
+  }
+}
+
+const CC={'Community resilience':'#3b9ede','Indigenous self-determination':'#e8b84a','Education outcomes':'#5cb85c','Youth development':'#e87c3e','Insight and influence':'#d9534f','':'#8898aa'};
+const SL=['Introduction','The Challenge','How to Use','Lines of Inquiry','Full Network Map','Learn More'];
+
+async function init() {
+  const loadEl = document.getElementById('loading');
+  const msgEl  = document.getElementById('load-msg');
+  const errEl  = document.getElementById('load-err');
+
+  const result = await loadSheetData();
+  if (!result.ok) {
+    msgEl.textContent = 'Using offline snapshot';
+    errEl.innerHTML = `Could not reach Google Sheets (<em>${result.error}</em>).<br>Showing last saved data. Open via a web server for live updates.`;
+    errEl.style.display = 'block';
+    await new Promise(r => setTimeout(r, 2500));
+  } else {
+    msgEl.textContent = 'Live data loaded ✓';
+    await new Promise(r => setTimeout(r, 300));
+  }
+  loadEl.style.display = 'none';
+
+  let cur=0;
+  const slides=document.querySelectorAll('.slide');
+  const dotsEl=document.getElementById('nav-dots');
+  const nlbl=document.getElementById('nav-lbl');
+  SL.forEach((_,i)=>{const d=document.createElement('button');d.className='nav-dot'+(i===0?' active':'');d.onclick=()=>goTo(i);dotsEl.appendChild(d);});
+function goTo(idx){slides[cur].classList.remove('active');dotsEl.children[cur].classList.remove('active');cur=idx;slides[idx].classList.add('active');dotsEl.children[idx].classList.add('active');nlbl.textContent=SL[idx]+' — '+(idx+1)+' of '+slides.length;document.getElementById('btn-back').disabled=idx===0;document.getElementById('btn-next').disabled=idx===slides.length-1;if(idx===3&&!loiBuilt)requestAnimationFrame(()=>requestAnimationFrame(buildLOI));if(idx===4&&!netBuilt)requestAnimationFrame(()=>requestAnimationFrame(buildNet));hideTT();}
+document.getElementById('btn-back').onclick=()=>cur>0&&goTo(cur-1);
+document.getElementById('btn-next').onclick=()=>cur<slides.length-1&&goTo(cur+1);
+document.getElementById('btn-back').disabled=true;
+nlbl.textContent=SL[0]+' — 1 of '+slides.length;
+
+// ── TOOLTIP ──
+const tt=document.getElementById('tt'),ttType=document.getElementById('tt-type'),ttTitle=document.getElementById('tt-title'),ttBody=document.getElementById('tt-body');
+let loiClickFn=null,netClickFn=null;
+let hoverTimer=null;
+function startHoverTT(label,e){
+  clearTimeout(hoverTimer);
+  hoverTimer=setTimeout(()=>showTT(label,e.clientX,e.clientY),600);
+}
+function clearHoverTT(){clearTimeout(hoverTimer);}
+function navTo(label){if(!ELEMENTS[label])return;hideTT();if(cur===3&&loiClickFn)loiClickFn(label);else if(cur===4&&netClickFn)netClickFn(label);}
+tt.addEventListener('click',e=>{const t=e.target.closest('[data-nav]');if(t){e.stopPropagation();navTo(t.dataset.nav);}});
+function buildLists(label){
+  const el=ELEMENTS[label];if(!el)return'';
+  const type=el.type,secs=[];
+  if(type==='Initiative'){
+    const p=CONNECTIONS.filter(c=>c.type==='Partner'&&c.to===label&&ELEMENTS[c.from]).map(c=>c.from);
+    if(p.length)secs.push({t:'Partners involved',items:p});
+    const o=CONNECTIONS.filter(c=>c.type==='Output'&&c.to===label&&ELEMENTS[c.from]).map(c=>c.from);
+    if(o.length)secs.push({t:'Related outputs',items:o});
+  }
+  if(type==='Partner'){
+    const i=CONNECTIONS.filter(c=>c.type==='Partner'&&c.from===label&&ELEMENTS[c.to]).map(c=>c.to);
+    if(i.length)secs.push({t:'Initiatives involved in',items:i});
+  }
+  if(type==='Lever'||type==='Level of Leadership'){
+    const i=CONNECTIONS.filter(c=>c.type==='Level of Leadership'&&c.to===label&&ELEMENTS[c.from]).map(c=>c.from);
+    if(i.length)secs.push({t:'Initiatives contributing insight',items:i});
+  }
+  if(type==='Cohort'){
+    const l=CONNECTIONS.filter(c=>c.type==='Lever'&&c.to===label&&ELEMENTS[c.from]).map(c=>c.from);
+    if(l.length)secs.push({t:'Systemic levers',items:l});
+  }
+  if(type==='Context'&&label==='Our leadership hypothesis'){
+    const qs=Object.entries(ELEMENTS).filter(([,e])=>e.type==='Level of Leadership').sort((a,b)=>a[1].size-b[1].size).map(([l])=>l);
+    if(qs.length)secs.push({t:'Our lines of inquiry',items:qs});
+  }
+  if(!secs.length)return'';
+  return'<div class="tlists">'+secs.map(s=>{
+    const ul=s.t==='Our lines of inquiry';
+    const inner=ul
+      ?'<ul style="margin:4px 0 0;padding-left:16px;">'+s.items.map(i=>'<li data-nav="'+i.replace(/"/g,'&quot;')+'" style="margin-bottom:4px;color:rgba(255,255,255,.8);font-size:11px;cursor:pointer;" onmouseenter="this.style.color=\\x27#e8b96a\\x27" onmouseleave="this.style.color=\\x27rgba(255,255,255,.8)\\x27">'+i+'</li>').join('')+'</ul>'
+      :'<div class="tchips">'+s.items.map(i=>'<span class="tchip" data-nav="'+i.replace(/"/g,'&quot;')+'">'+i+'</span>').join('')+'</div>';
+    return'<div><div class="tlt">'+s.t+'</div>'+inner+'</div>';
+  }).join('')+'</div>';
+}
+function showTT(label,x,y){
+  const el=ELEMENTS[label];if(!el)return;
+  ttType.textContent=el.type;ttTitle.textContent=label;
+  let d=(el.description||'').replace(/\\n/g,'<br>').replace(/<a /g,'<a target="_blank" rel="noopener" ');
+  d=d.replace(/(\\s*<br\\s*\\/?>\\s*)+$/,'').trimEnd();
+  ttBody.innerHTML=d+buildLists(label);
+  tt.classList.add('vis');
+  const tw=tt.offsetWidth||320,th=tt.offsetHeight||200;
+  let lx=x+16,ly=y-10;
+  if(lx+tw>window.innerWidth-12)lx=x-tw-16;
+  if(ly+th>window.innerHeight-12)ly=window.innerHeight-th-12;
+  if(ly<10)ly=10;
+  tt.style.left=lx+'px';tt.style.top=ly+'px';
+}
+function hideTT(){tt.classList.remove('vis');}
+document.addEventListener('click',e=>{if(!e.target.closest('#tt')&&!e.target.closest('[data-label]'))hideTT();});
+
+function svgEl(t,a){const e=document.createElementNS('http://www.w3.org/2000/svg',t);for(const[k,v]of Object.entries(a||{}))e.setAttribute(k,v);return e;}
+function wrapText(text,maxW){const cpl=Math.floor(maxW/6);if(text.length<=cpl)return[text];const words=text.split(' ');const lines=[];let cur='';words.forEach(w=>{if((cur+' '+w).trim().length>cpl&&cur){lines.push(cur);cur=w;}else cur=(cur+' '+w).trim();});if(cur)lines.push(cur);return lines.slice(0,3);}
+
+// ── PAN/ZOOM ──
+function setupPZ(container,svg,g,tf,apply){
+  let drag=false,lx,ly;
+  container.addEventListener('mousedown',e=>{drag=true;lx=e.clientX;ly=e.clientY;e.preventDefault();});
+  window.addEventListener('mouseup',()=>drag=false);
+  window.addEventListener('mousemove',e=>{if(!drag)return;tf.x+=e.clientX-lx;tf.y+=e.clientY-ly;lx=e.clientX;ly=e.clientY;apply();});
+  container.addEventListener('wheel',e=>{e.preventDefault();const r=container.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,f=e.deltaY<0?1.1:0.9;tf.x=mx-(mx-tf.x)*f;tf.y=my-(my-tf.y)*f;tf.scale=Math.max(.1,Math.min(5,tf.scale*f));apply();},{passive:false});
+  let ltd=null;
+  container.addEventListener('touchstart',e=>{if(e.touches.length===1){drag=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;}if(e.touches.length===2)ltd=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);e.preventDefault();},{passive:false});
+  container.addEventListener('touchmove',e=>{if(e.touches.length===1&&drag){tf.x+=e.touches[0].clientX-lx;tf.y+=e.touches[0].clientY-ly;lx=e.touches[0].clientX;ly=e.touches[0].clientY;apply();}if(e.touches.length===2&&ltd){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);tf.scale=Math.max(.1,Math.min(5,tf.scale*d/ltd));ltd=d;apply();}e.preventDefault();},{passive:false});
+  container.addEventListener('touchend',()=>{drag=false;ltd=null;});
+}
+
+// ════════════════════════════════════════
+// SLIDE 4: LOI MAP
+// ════════════════════════════════════════
+let loiBuilt=false;let loiTF={x:0,y:0,scale:1};
+function applyLTF(g){g.setAttribute('transform','translate('+loiTF.x+','+loiTF.y+') scale('+loiTF.scale+')');}
+function buildLOI(){
+  const svg=document.getElementById('loi-svg'),canvas=document.getElementById('loi-canvas');
+  const r=canvas.getBoundingClientRect();const W=r.width||canvas.clientWidth,H=r.height||canvas.clientHeight;
+  if(!W||!H){requestAnimationFrame(buildLOI);return;}
+  loiBuilt=true;
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('width',W);svg.setAttribute('height',H);
+  const cx=W/2,nodes={};
+  nodes['The 21st Century leadership challenge']={x:cx,y:56,w:320,h:44};
+  nodes['Our leadership hypothesis']={x:cx,y:118,w:300,h:40};
+  const qLbls=['Purpose','Leadership of self','Leading with others','Leading in systems','Inter-cultural leadership','Developing leadership capability'];
+  const qW=130,qH=52,qGap=14,qTW=qLbls.length*(qW+qGap)-qGap;
+  qLbls.forEach((q,i)=>nodes[q]={x:cx-qTW/2+i*(qW+qGap)+qW/2,y:192,w:qW,h:qH});
+  const qSet=new Set(qLbls);
+  const allInits=[...new Set(CONNECTIONS.filter(c=>c.type==='Level of Leadership'&&qSet.has(c.to)&&ELEMENTS[c.from]?.type==='Initiative').map(c=>c.from))];
+
+  // Group initiatives by workstream
+  const wsGroups={
+    'Innovation': allInits.filter(k=>['Community resilience','Youth development','Education outcomes','Indigenous self-determination'].includes(ELEMENTS[k]?.category||'')),
+    'Insight':    allInits.filter(k=>['Complexity Leadership Lab','Australian Leadership Index'].includes(k)),
+    'Influence':  allInits.filter(k=>['Australasian leadership initiative','Menzies Oration'].includes(k))
+  };
+  const grouped=new Set([...wsGroups.Innovation,...wsGroups.Insight,...wsGroups.Influence]);
+  allInits.filter(k=>!grouped.has(k)).forEach(k=>wsGroups.Innovation.push(k));
+
+  // ── Relative layout constants ──
+  const iW=110, iGap=10;
+  const perRow=Math.floor((W-40)/(iW+iGap));
+  const INIT_LINE_H=13, INIT_VPAD=6;  // tighter vertical padding each side
+  const INIT_H=3*INIT_LINE_H+INIT_VPAD*2; // uniform height: 3 lines + padding = 51px
+  const BOX_GAP=8;
+  const SUBTITLE_H=24, SUBTITLE_GAP=14;
+  const WS_H=22,  WS_GAP=10;
+  const GROUP_GAP=14;
+  const SECTION_GAP=28;
+
+  // All initiatives same height
+  const initH={};
+  allInits.forEach(k=>{ initH[k]=INIT_H; });
+
+  // Start y: bottom of question boxes + gap
+  let curY = 192 + qH/2 + 24;
+
+  // ── INITIATIVES subtitle ──
+  const iSubtitleY = curY + SUBTITLE_H/2;
+  curY += SUBTITLE_H + SUBTITLE_GAP;
+
+  // ── Workstream groups — row-aware layout with variable heights ──
+  Object.entries(wsGroups).forEach(([ws,inits],gi)=>{
+    if(!inits.length)return;
+    if(gi>0) curY+=GROUP_GAP;
+    nodes[ws]={x:20, y:curY+WS_H/2, w:100, h:WS_H, isWsLabel:true};
+    curY+=WS_H+WS_GAP;
+    // Lay out rows — all same height, simple grid
+    const numRows=Math.ceil(inits.length/perRow);
+    for(let row=0;row<numRows;row++){
+      const rowInits=inits.slice(row*perRow,(row+1)*perRow);
+      rowInits.forEach((k,col)=>{
+        nodes[k]={x:20+col*(iW+iGap)+iW/2, y:curY+INIT_H/2, w:iW, h:INIT_H};
+      });
+      curY+=INIT_H+(row<numRows-1?BOX_GAP:0);
+    }
+  });
+
+  // ── PARTNERS subtitle ──
+  curY+=SECTION_GAP;
+  const pSubtitleY = curY + SUBTITLE_H/2;
+  curY+=SUBTITLE_H+SUBTITLE_GAP;
+
+  const partnerSet={};
+  CONNECTIONS.forEach(c=>{if(c.type==='Partner'&&nodes[c.to]&&ELEMENTS[c.from]?.type==='Partner'){if(!partnerSet[c.from])partnerSet[c.from]=[];partnerSet[c.from].push(c.to);}});
+  const allPartners=Object.keys(partnerSet).sort((a,b)=>a.localeCompare(b));
+  const chipH2=20, chipRowH=26, pCols=Math.max(1, Math.floor((W-40)/160)-1);
+  const colW=Math.floor((W-40)/pCols);
+  const pY=curY;
+  allPartners.forEach((p,i)=>nodes[p]={x:20+(i%pCols)*colW, y:pY+(Math.floor(i/pCols))*chipRowH+chipH2/2, w:0, h:chipH2, isPart:true});
+
+  const totalH=pY+Math.ceil(allPartners.length/pCols)*chipRowH+40;
+  const scl=Math.min(1,(H-40)/totalH);
+  loiTF={x:(W-W*scl)/2, y:20, scale:scl};
+  const defs=svgEl('defs');
+  const mk=svgEl('marker',{id:'la',markerWidth:'8',markerHeight:'8',refX:'6',refY:'3',orient:'auto'});
+  mk.appendChild(svgEl('path',{d:'M0,0 L0,6 L8,3 z',fill:'rgba(255,255,255,0.25)'}));defs.appendChild(mk);svg.appendChild(defs);
+  const g=svgEl('g',{id:'loi-g'});svg.appendChild(g);applyLTF(g);
+
+  // Section subtitle pill (large)
+  function addSubtitle(text,x,y){
+    const grp=svgEl('g',{class:'ln','data-label':'__lbl__',style:'pointer-events:none'});
+    grp.appendChild(svgEl('rect',{x:x,y:y-SUBTITLE_H/2,width:130,height:SUBTITLE_H,rx:'9',fill:'rgba(255,255,255,.06)',stroke:'rgba(255,255,255,.2)','stroke-width':'0.8'}));
+    const t=svgEl('text',{x:x+65,y:y+5,'text-anchor':'middle',fill:'rgba(255,255,255,.85)','font-size':'13','font-family':'DM Sans,sans-serif','font-weight':'500','letter-spacing':'0.06em'});t.textContent=text;
+    grp.appendChild(t);g.appendChild(grp);
+  }
+  // Workstream sub-sub-heading pill (smaller)
+  function addWsLabel(text,x,y,col){
+    const grp=svgEl('g',{class:'ln','data-label':text,style:'cursor:pointer'});
+    grp.appendChild(svgEl('rect',{x:x,y:y-WS_H/2,width:88,height:WS_H,rx:'4',fill:col+'22',stroke:col+'88','stroke-width':'0.8'}));
+    const t=svgEl('text',{x:x+8,y:y+4,fill:col,'font-size':'10','font-family':'DM Sans,sans-serif','font-weight':'500','letter-spacing':'0.07em'});t.textContent=text.toUpperCase();
+    grp.appendChild(t);
+    grp.addEventListener('mouseenter',e=>{startHoverTT(text,e);});
+    grp.addEventListener('mouseleave',()=>{clearHoverTT();});
+    grp.addEventListener('click',e=>{e.stopPropagation();loiClick(text);});
+    g.appendChild(grp);
+  }
+  const wsColors={Innovation:'#e8b96a',Insight:'#7ab8e8',Influence:'#a0c88a'};
+  addSubtitle('INITIATIVES', 20, iSubtitleY);
+  addSubtitle('PARTNERS', 20, pSubtitleY);
+
+  function addEdge(f,t,col,dash,df,dt){const a=nodes[f],b=nodes[t];if(!a||!b)return;
+    const line=svgEl('line',{x1:df?df.x:a.x,y1:df?df.y:a.y+(a.h||0)/2,x2:dt?dt.x:b.x,y2:dt?dt.y:b.y-(b.h||0)/2,stroke:col,'stroke-width':'1','stroke-dasharray':dash||'4,3',opacity:'0.5','data-from':f,'data-to':t});
+    g.insertBefore(line,g.firstChild);}
+  addEdge('The 21st Century leadership challenge','Our leadership hypothesis','rgba(255,255,255,0.3)','5,3');
+  qLbls.forEach((q,i)=>{if(i<qLbls.length-1){const a=nodes[q],b=nodes[qLbls[i+1]];
+    const p=svgEl('path',{d:'M'+(a.x+a.w/2)+','+a.y+' C'+((a.x+a.w/2+b.x-b.w/2)/2)+','+a.y+' '+((a.x+a.w/2+b.x-b.w/2)/2)+','+b.y+' '+(b.x-b.w/2)+','+b.y,stroke:'rgba(255,255,255,0.2)','stroke-width':'1',fill:'none','stroke-dasharray':'4,3','data-from':q,'data-to':qLbls[i+1],'marker-end':'url(#la)'});g.insertBefore(p,g.firstChild);}});
+  CONNECTIONS.forEach(c=>{if(c.type==='Level of Leadership'&&nodes[c.from]&&nodes[c.to]){const cat=ELEMENTS[c.from]?.category||'';addEdge(c.from,c.to,CC[cat]||'rgba(255,255,255,.3)','3,3',{x:nodes[c.from].x,y:nodes[c.from].y-(nodes[c.from].h||0)/2},{x:nodes[c.to].x,y:nodes[c.to].y+(nodes[c.to].h||0)/2});}});
+  CONNECTIONS.forEach(c=>{if(c.type==='Partner'&&nodes[c.from]&&nodes[c.to]){addEdge(c.from,c.to,'rgba(255,255,255,0.1)','2,3',{x:nodes[c.from].x+6,y:nodes[c.from].y+6},{x:nodes[c.to].x,y:nodes[c.to].y-(nodes[c.to].h||0)/2});}});
+
+  let loiSel=null;
+  function loiClick(label){
+    if(!nodes[label]){hideTT();return;}
+    if(loiSel===label){loiSel=null;loiReset();hideTT();return;}
+    loiSel=label;loiReset();
+    const n=nodes[label],rect=canvas.getBoundingClientRect();
+    const sx=rect.left+(n.x+(n.w||0)/2)*loiTF.scale+loiTF.x;
+    const sy=rect.top+(n.y+(n.h||0)/2)*loiTF.scale+loiTF.y;
+    showTT(label,sx,sy);
+    const conn=new Set([label]);
+    CONNECTIONS.forEach(c=>{if(nodes[c.from]&&nodes[c.to]&&(c.from===label||c.to===label)){conn.add(c.from);conn.add(c.to);}});
+    g.querySelectorAll('.ln').forEach(n=>n.style.opacity=conn.has(n.dataset.label)?'1':'0.07');
+    g.querySelectorAll('line[data-from],path[data-from]').forEach(l=>{const f=l.getAttribute('data-from'),t=l.getAttribute('data-to');const ok=conn.has(f)&&conn.has(t);l.setAttribute('opacity',ok?'0.9':'0.03');if(l.tagName==='line')l.setAttribute('stroke-width',ok?'1.5':'0.5');});
+  }
+  function loiReset(){g.querySelectorAll('.ln').forEach(n=>n.style.opacity='');g.querySelectorAll('line[data-from],path[data-from]').forEach(l=>{l.setAttribute('opacity','0.5');if(l.tagName==='line')l.setAttribute('stroke-width','1');});}
+  loiClickFn=loiClick;
+  canvas.addEventListener('click',()=>{loiSel=null;loiReset();hideTT();});
+
+  function drawBox(key,opts){const n=nodes[key];if(!n)return;const el=ELEMENTS[key];if(!el)return;
+    const grp=svgEl('g',{class:'ln','data-label':key,style:'cursor:pointer'});
+    grp.appendChild(svgEl('rect',{x:n.x-n.w/2,y:n.y-n.h/2,width:n.w,height:n.h,rx:opts.rx||3,fill:opts.fill||'rgba(20,35,55,.95)',stroke:opts.stroke||'rgba(255,255,255,.3)','stroke-width':opts.sw||'1.5'}));
+    const lines=wrapText(key,n.w-16),lh=13,th=lines.length*lh;
+    lines.forEach((l,li)=>{const t=svgEl('text',{x:n.x,y:n.y-th/2+li*lh+lh*.8,'text-anchor':'middle',fill:opts.tc||'white','font-size':opts.fs||'11','font-family':'DM Sans,sans-serif','font-weight':opts.bold?'600':'400'});t.textContent=l;grp.appendChild(t);});
+    grp.addEventListener('mouseenter',e=>{startHoverTT(key,e);});
+    grp.addEventListener('mousemove', e=>{clearHoverTT();startHoverTT(key,e);});
+    grp.addEventListener('mouseleave',()=>{clearHoverTT();});
+    grp.addEventListener('click',e=>{e.stopPropagation();loiClick(key);});
+    g.appendChild(grp);}
+
+  drawBox('The 21st Century leadership challenge',{fill:'rgba(60,70,80,.95)',stroke:'rgba(255,255,255,.35)',sw:'1.5',bold:true,fs:'12',rx:4});
+  drawBox('Our leadership hypothesis',{fill:'rgba(60,70,80,.95)',stroke:'rgba(255,255,255,.3)',sw:'1.5',bold:true,fs:'11',rx:4});
+  qLbls.forEach(q=>drawBox(q,{fill:'#1a2635',stroke:'rgba(255,255,255,.7)',sw:'2',bold:true,fs:'10',rx:3}));
+  // Draw workstream sub-sub-headings
+  Object.entries(wsGroups).forEach(([ws,inits])=>{
+    if(!inits.length)return;
+    const n=nodes[ws];if(!n)return;
+    addWsLabel(ws,n.x,n.y,wsColors[ws]||'rgba(255,255,255,.5)');
+  });
+
+  allInits.forEach(k=>{const cat=ELEMENTS[k]?.category||'';drawBox(k,{fill:CC[cat]||'#555',stroke:'rgba(255,255,255,.2)',sw:'1',fs:'9',rx:2});});
+  allPartners.forEach(p=>{const n=nodes[p];if(!n)return;
+    const grp=svgEl('g',{class:'ln','data-label':p,style:'cursor:pointer'});
+    const connInit=CONNECTIONS.find(c=>c.type==='Partner'&&c.from===p&&nodes[c.to]);
+    const accentCol=CC[ELEMENTS[connInit?.to]?.category||'']||'rgba(255,255,255,.2)';
+    const chipH=20,padL=9,padR=7;
+    const tMeasure=svgEl('text',{x:'0',y:'0',fill:'none','font-size':'9','font-family':'DM Sans,sans-serif'});tMeasure.textContent=p;
+    g.appendChild(tMeasure);const tw=tMeasure.getComputedTextLength()||p.length*5.2;g.removeChild(tMeasure);
+    const chipW=padL+tw+padR;
+    const x0=n.x;
+    grp.appendChild(svgEl('rect',{x:x0,y:n.y-chipH/2,width:chipW,height:chipH,rx:'3',fill:'transparent'}));
+    const bg=svgEl('rect',{x:x0,y:n.y-chipH/2,width:chipW,height:chipH,rx:'3',fill:'rgba(255,255,255,.06)',stroke:'rgba(255,255,255,.18)','stroke-width':'0.8'});
+    const bar=svgEl('rect',{x:x0,y:n.y-chipH/2,width:3,height:chipH,rx:'3',fill:accentCol,opacity:'0.7'});
+    const t=svgEl('text',{x:x0+padL,y:n.y+4,fill:'rgba(255,255,255,.75)','font-size':'9','font-family':'DM Sans,sans-serif',style:'pointer-events:none'});t.textContent=p;
+    grp.appendChild(bg);grp.appendChild(bar);grp.appendChild(t);
+    grp.addEventListener('mouseenter',e=>{bg.setAttribute('fill','rgba(255,255,255,.12)');bg.setAttribute('stroke','rgba(255,255,255,.4)');t.setAttribute('fill','rgba(255,255,255,.95)');startHoverTT(p,e);});
+    grp.addEventListener('mouseleave',()=>{bg.setAttribute('fill','rgba(255,255,255,.06)');bg.setAttribute('stroke','rgba(255,255,255,.18)');t.setAttribute('fill','rgba(255,255,255,.75)');clearHoverTT();});
+    grp.addEventListener('click',e=>{e.stopPropagation();loiClick(p);});
+    g.appendChild(grp);});
+
+  document.querySelectorAll('#loi-filters .fb').forEach(btn=>{btn.onclick=function(){document.querySelectorAll('#loi-filters .fb').forEach(b=>b.classList.remove('active'));this.classList.add('active');const show=this.dataset.show;g.querySelectorAll('.ln').forEach(n=>{const t=ELEMENTS[n.dataset.label]?.type||'';let v=true;if(show==='Level of Leadership')v=t==='Level of Leadership'||t==='Context';else if(show==='Initiative')v=t==='Initiative'||t==='Level of Leadership'||t==='Context';n.style.opacity=v?'1':'0.08';});};});
+  setupPZ(canvas,svg,g,loiTF,()=>applyLTF(g));
+  document.getElementById('loi-zi').onclick=()=>{loiTF.scale=Math.min(loiTF.scale*1.2,4);applyLTF(g);};
+  document.getElementById('loi-zo').onclick=()=>{loiTF.scale=Math.max(loiTF.scale/1.2,.2);applyLTF(g);};
+  document.getElementById('loi-zf').onclick=()=>{loiTF={x:(W-W*scl)/2,y:20,scale:scl};applyLTF(g);};
+}
+
+// ════════════════════════════════════════
+// SLIDE 5: NET MAP
+// ════════════════════════════════════════
+let netBuilt=false;let netTF={x:0,y:0,scale:1};
+let netActiveType='all',netActiveCat='all',netActiveYear='all';
+function applyNTF(g){g.setAttribute('transform','translate('+netTF.x+','+netTF.y+') scale('+netTF.scale+')');}
+
+function buildNet(){
+  const canvas=document.getElementById('net-canvas'),svg=document.getElementById('net-svg');
+  const r=canvas.getBoundingClientRect();const W=r.width||canvas.clientWidth,H=r.height||canvas.clientHeight;
+  if(!W||!H){requestAnimationFrame(buildNet);return;}
+  netBuilt=true;
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('width',W);svg.setAttribute('height',H);
+
+  const cx=W*.38,cy=H*.50,pos={};
+  pos['FUTURE-FIT LEADERSHIP']={x:cx,y:cy};
+  const cohortAng={'Citizens':30,'Young people':120,'Teachers':210,'Indigenous women':300};
+  Object.entries(cohortAng).forEach(([k,deg])=>{const a=deg*Math.PI/180;pos[k]={x:cx+92*Math.sin(a),y:cy-92*Math.cos(a)};});
+  const lR=184;function lp(deg){const a=deg*Math.PI/180;return{x:cx+lR*Math.sin(a),y:cy-lR*Math.cos(a)};}
+  pos['Media']=lp(350);pos['Culture']=lp(8);pos['Capability']=lp(26);pos['Capital']=lp(44);pos['Governance']=lp(62);
+  pos['International exchange']=lp(108);pos['Curriculum']=lp(165);pos['Evidence']=lp(188);pos['Teacher training']=lp(228);pos['Entrepreneurship']=lp(300);
+  pos['Innovation']={x:cx-320,y:cy-180};pos['Insight']={x:cx-300,y:cy-120};pos['Influence']={x:cx-280,y:cy-55};
+  pos['Cohorts and levers']={x:cx-180,y:cy};pos['Initiatives and outputs']={x:cx-280,y:cy};
+
+  function placeCircle(keys,rad){
+    const sorted=[...keys].sort((a,b)=>(ELEMENTS[a]?.size||0)-(ELEMENTS[b]?.size||0));
+    const step=360/sorted.length,angs={};
+    sorted.forEach((k,i)=>{const deg=30+i*step,a=deg*Math.PI/180;pos[k]={x:cx+rad*Math.sin(a),y:cy-rad*Math.cos(a)};angs[k]=deg;});
+    return angs;
+  }
+  const initKeys=Object.keys(ELEMENTS).filter(k=>ELEMENTS[k].type==='Initiative');
+  const initAngs=placeCircle(initKeys,276);
+  const outKeys=Object.keys(ELEMENTS).filter(k=>ELEMENTS[k].type==='Output');
+  const outStep=360/outKeys.length;
+  function idealAng(ok){const c=CONNECTIONS.find(x=>x.type==='Output'&&x.from===ok);return(c&&initAngs[c.to]!=null)?initAngs[c.to]:180;}
+  const sortedOuts=[...outKeys].sort((a,b)=>{const d=idealAng(a)-idealAng(b);if(Math.abs(d)>.1)return d;return(ELEMENTS[a]?.size||0)-(ELEMENTS[b]?.size||0);});
+  let bestOff=30,bestCost=Infinity;
+  for(let t=0;t<sortedOuts.length;t++){const off=30+t*outStep;let cost=0;sortedOuts.forEach((k,i)=>{let d=((off+i*outStep-idealAng(k))+360)%360;if(d>180)d=360-d;cost+=d;});if(cost<bestCost){bestCost=cost;bestOff=30+t*outStep;}}
+  sortedOuts.forEach((k,i)=>{const deg=bestOff+i*outStep,a=deg*Math.PI/180;pos[k]={x:cx+368*Math.sin(a),y:cy-368*Math.cos(a)};});
+
+  // Partners in right column — beyond output ring
+  const partKeys=Object.keys(ELEMENTS).filter(k=>ELEMENTS[k].type==='Partner');
+  const pColX=cx+432;
+  partKeys.forEach((p,i)=>pos[p]={x:pColX,y:cy-340+i*700/partKeys.length});
+  // 'Partners' label sits above the partner column
+  pos['Partners']={x:pColX,y:cy-370};
+
+  netTF={x:0,y:0,scale:1};
+  const allX=Object.values(pos).map(p=>p.x),allY=Object.values(pos).map(p=>p.y);
+  const minX=Math.min(...allX)-40,maxX=Math.max(...allX)+200,minY=Math.min(...allY)-40,maxY=Math.max(...allY)+40;
+  const sc=Math.min(1,W/(maxX-minX),H/(maxY-minY))*.9;
+  const tx=(W-(maxX-minX)*sc)/2-minX*sc,ty=(H-(maxY-minY)*sc)/2-minY*sc;
+  netTF={x:tx,y:ty,scale:sc};
+
+  const defs=svgEl('defs');
+  const mk=svgEl('marker',{id:'na',markerWidth:'6',markerHeight:'6',refX:'5',refY:'3',orient:'auto'});
+  mk.appendChild(svgEl('path',{d:'M0,0 L0,6 L6,3 z',fill:'rgba(255,255,255,0.2)'}));defs.appendChild(mk);svg.appendChild(defs);
+  const g=svgEl('g',{id:'net-g'});svg.appendChild(g);
+  const edgeG=svgEl('g',{id:'net-edges'}),ringG=svgEl('g',{id:'net-rings'}),nodeG=svgEl('g',{id:'net-nodes'});
+  g.appendChild(edgeG);g.appendChild(ringG);g.appendChild(nodeG);
+  applyNTF(g);
+
+  // Separator ring
+  ringG.appendChild(svgEl('circle',{cx,cy,r:'232',fill:'none',stroke:'rgba(255,255,255,0.3)','stroke-width':'3'}));
+
+  CONNECTIONS.forEach(c=>{
+    const fe=ELEMENTS[c.from],te=ELEMENTS[c.to];if(!fe||!te)return;
+    if(fe.type==='Workstream'||te.type==='Workstream')return;
+    const cat=fe.category||te.category||'';const col=(CC[cat]||'#8898aa')+'88';
+    const dash=c.type==='Partner'?'4,4':c.type==='Output'?'5,4':'none';
+    const sz=c.size||1;
+    const sw=(0.3+sz*3).toFixed(1);
+    const af=pos[c.from],at=pos[c.to];if(!af||!at)return;
+    // Quadratic bezier: control point pulled towards map centre (cx,cy)
+    // gives gentle inward curves that echo the circular ring layout
+    const mx=(af.x+at.x)/2, my=(af.y+at.y)/2;
+    const pull=0.35; // how strongly the curve bends toward centre
+    const qx=mx+pull*(cx-mx), qy=my+pull*(cy-my);
+    const path=svgEl('path',{
+      d:`M${af.x},${af.y} Q${qx},${qy} ${at.x},${at.y}`,
+      stroke:col,'stroke-width':sw,'stroke-dasharray':dash,
+      fill:'none',opacity:'0.4','data-from':c.from,'data-to':c.to
+    });
+    edgeG.appendChild(path);
+  });
+  edgeG.querySelectorAll('path').forEach(p=>p._sw=p.getAttribute('stroke-width')||'2');
+
+  let netSel=null;
+  function netClick(label){
+    if(netSel===label){netSel=null;netReset();hideTT();return;}
+    netSel=label;netReset();
+    const p=pos[label];if(p){const r=canvas.getBoundingClientRect();showTT(label,r.left+p.x*netTF.scale+netTF.x,r.top+p.y*netTF.scale+netTF.y);}
+    else showTT(label,window.innerWidth*.5,window.innerHeight*.4);
+    const conn=new Set([label]);
+    CONNECTIONS.forEach(c=>{if(c.from===label||c.to===label){conn.add(c.from);conn.add(c.to);}});
+    edgeG.querySelectorAll('path').forEach(l=>{const ok=conn.has(l.getAttribute('data-from'))&&conn.has(l.getAttribute('data-to'));l.setAttribute('opacity',ok?'0.95':'0.03');l.setAttribute('stroke-width',ok?(parseFloat(l._sw||2)*1.3).toFixed(1):'0.5');});
+    nodeG.querySelectorAll('g').forEach(n=>n.style.opacity=conn.has(n.dataset.label)?'1':'0.07');
+  }
+  function netReset(){
+    edgeG.querySelectorAll('path').forEach(l=>{l.setAttribute('stroke-width',l._sw||'2');});
+    nodeG.querySelectorAll('g').forEach(n=>n.style.opacity='');
+    applyFilters();
+  }
+  netClickFn=netClick;
+  svg.addEventListener('click',()=>{netSel=null;netReset();hideTT();});
+
+  // Get partner label colour from its first connected initiative's category
+  function partnerColor(label){
+    const conn=CONNECTIONS.find(c=>c.type==='Partner'&&c.from===label&&ELEMENTS[c.to]);
+    if(!conn)return'rgba(255,255,255,.2)';
+    return CC[ELEMENTS[conn.to]?.category||'']||'rgba(255,255,255,.2)';
+  }
+
+  function drawNode(key){
+    const p=pos[key];if(!p)return;const el=ELEMENTS[key];if(!el)return;
+    const cat=el.category||'',col=CC[cat]||'#8898aa';
+    const grp=svgEl('g',{'data-label':key,'data-type':el.type,'data-cat':cat,style:'cursor:pointer'});
+
+    if(el.type==='Context'){
+      if(key==='FUTURE-FIT LEADERSHIP'){
+        // Radial gradient: warm cream centre fading to transparent
+        const gid='ffl-glow';
+        let defs2=svg.querySelector('defs');if(!defs2){defs2=svgEl('defs');svg.insertBefore(defs2,svg.firstChild);}
+        if(!defs2.querySelector('#'+gid)){
+          const rg=svgEl('radialGradient',{id:gid,cx:'50%',cy:'50%',r:'50%'});
+          const s0=svgEl('stop',{offset:'0%','stop-color':'rgba(247,240,225,1)'});
+          const s1=svgEl('stop',{offset:'60%','stop-color':'rgba(247,240,225,0.55)'});
+          const s2=svgEl('stop',{offset:'100%','stop-color':'rgba(247,240,225,0)'});
+          rg.appendChild(s0);rg.appendChild(s1);rg.appendChild(s2);defs2.appendChild(rg);
+        }
+        grp.appendChild(svgEl('circle',{cx:p.x,cy:p.y,r:'70',fill:'url(#ffl-glow)'}));
+        const t1=svgEl('text',{x:p.x,y:p.y-5,'text-anchor':'middle','dominant-baseline':'middle',fill:'#1a2635','font-size':'14','font-family':'Libre Baskerville,serif','font-weight':'700',style:'pointer-events:none'});t1.textContent='FUTURE-FIT';
+        const t2=svgEl('text',{x:p.x,y:p.y+11,'text-anchor':'middle',fill:'#1a2635','font-size':'11','font-family':'DM Sans,sans-serif','font-weight':'500','letter-spacing':'0.12em',style:'pointer-events:none'});t2.textContent='LEADERSHIP';
+        grp.appendChild(t1);grp.appendChild(t2);
+      } else if(key==='Cohorts and levers'||key==='Initiatives and outputs'){
+        const parts=key.split(' and ');
+        // Measure both text lines, use the wider one to size the pill
+        const tm1=svgEl('text',{'font-size':'13','font-family':'DM Sans,sans-serif','font-weight':'500','letter-spacing':'0.06em'});tm1.textContent=parts[0].toUpperCase();
+        const tm2=svgEl('text',{'font-size':'9','font-family':'DM Sans,sans-serif','letter-spacing':'0.05em'});tm2.textContent=('& '+(parts[1]||'')).toUpperCase();
+        nodeG.appendChild(tm1);nodeG.appendChild(tm2);
+        const tw=Math.max(tm1.getComputedTextLength()||parts[0].length*8, tm2.getComputedTextLength()||parts[1]?.length*6||0);
+        nodeG.removeChild(tm1);nodeG.removeChild(tm2);
+        const hpad=12, chipW=tw+hpad*2, chipH=30;
+        grp.appendChild(svgEl('rect',{x:p.x-chipW/2,y:p.y-chipH/2,width:chipW,height:chipH,rx:'9',fill:'rgba(255,255,255,.06)',stroke:'rgba(255,255,255,.2)','stroke-width':'0.8'}));
+        const t1=svgEl('text',{x:p.x,y:p.y-1,'text-anchor':'middle',fill:'rgba(255,255,255,.85)','font-size':'13','font-family':'DM Sans,sans-serif','font-weight':'500','letter-spacing':'0.06em',style:'pointer-events:none'});t1.textContent=parts[0].toUpperCase();
+        const t2=svgEl('text',{x:p.x,y:p.y+12,'text-anchor':'middle',fill:'rgba(255,255,255,.55)','font-size':'9','font-family':'DM Sans,sans-serif','letter-spacing':'0.05em',style:'pointer-events:none'});t2.textContent=('& '+(parts[1]||'')).toUpperCase();
+        grp.appendChild(t1);grp.appendChild(t2);
+      } else if(key==='Partners'){
+        grp.appendChild(svgEl('rect',{x:p.x,y:p.y-14,width:92,height:26,rx:'9',fill:'rgba(255,255,255,.06)',stroke:'rgba(255,255,255,.2)','stroke-width':'0.8'}));
+        const t1=svgEl('text',{x:p.x+46,y:p.y+5,'text-anchor':'middle',fill:'rgba(255,255,255,.85)','font-size':'13','font-family':'DM Sans,sans-serif','font-weight':'500','letter-spacing':'0.06em',style:'pointer-events:none'});t1.textContent='PARTNERS';
+        grp.appendChild(t1);
+      }
+    } else if(el.type==='Cohort'){
+      const r2=36+(el.size-8)*8;
+      grp.appendChild(svgEl('circle',{cx:p.x,cy:p.y,r:r2,fill:col+'cc',stroke:col,'stroke-width':'2'}));
+      const lines=wrapText(key, r2*1.5);
+      const lh=14, totalH=lines.length*lh;
+      lines.forEach((l,li)=>{
+        const t=svgEl('text',{x:p.x,y:p.y-totalH/2+li*lh+lh*0.8,'text-anchor':'middle',fill:'white','font-size':'12','font-family':'DM Sans,sans-serif','font-weight':'500',style:'pointer-events:none'});
+        t.textContent=l;grp.appendChild(t);
+      });
+    } else if(el.type==='Lever'){
+      const circ=svgEl('circle',{cx:p.x,cy:p.y,r:'18',fill:col+'99',stroke:col,'stroke-width':'1.5'});
+      const ls=wrapText(key,60);ls.forEach((l,li)=>{const t=svgEl('text',{x:p.x,y:p.y-(ls.length-1)*5+li*10+3,'text-anchor':'middle',fill:'white','font-size':'9','font-family':'DM Sans,sans-serif',style:'pointer-events:none'});t.textContent=l;grp.appendChild(t);});
+      grp.insertBefore(circ,grp.firstChild);
+    } else if(el.type==='Initiative'){
+      grp.appendChild(svgEl('rect',{x:p.x-14,y:p.y-14,width:28,height:28,rx:'2',fill:col,stroke:'rgba(255,255,255,.3)','stroke-width':'1'}));
+      const t=svgEl('text',{x:p.x,y:p.y+22,'text-anchor':'middle',fill:'rgba(255,255,255,.7)','font-size':'8','font-family':'DM Sans,sans-serif',style:'pointer-events:none'});t.textContent=key.length>22?key.slice(0,21)+'…':key;grp.appendChild(t);
+    } else if(el.type==='Output'){
+      const s=10;
+      grp.appendChild(svgEl('polygon',{points:p.x+','+(p.y-s)+' '+(p.x-s*.87)+','+(p.y+s*.5)+' '+(p.x+s*.87)+','+(p.y+s*.5),fill:col+'bb',stroke:col,'stroke-width':'1'}));
+      const t=svgEl('text',{x:p.x,y:p.y+s+10,'text-anchor':'middle',fill:'rgba(255,255,255,.6)','font-size':'7.5','font-family':'DM Sans,sans-serif',style:'pointer-events:none'});t.textContent=key.length>20?key.slice(0,19)+'…':key;grp.appendChild(t);
+    } else if(el.type==='Partner'){
+      const accentCol=partnerColor(key);
+      const padL=9,padR=7,maxChipW=160,lineH=11,fontSize='9';
+      // Measure full text
+      const tMeasure=svgEl('text',{'font-size':fontSize,'font-family':'DM Sans,sans-serif'});
+      tMeasure.textContent=key;nodeG.appendChild(tMeasure);
+      const fullTW=tMeasure.getComputedTextLength()||key.length*5.2;
+      nodeG.removeChild(tMeasure);
+      // Decide if wrapping needed
+      let lines=[key];
+      if(padL+fullTW+padR>maxChipW){
+        // Split at last space before midpoint
+        const words=key.split(' ');let l1='',l2='';
+        for(let i=0;i<words.length-1;i++){
+          const candidate=words.slice(0,i+1).join(' ');
+          const rest=words.slice(i+1).join(' ');
+          if(candidate.length/(candidate.length+rest.length)>=0.45){l1=candidate;l2=rest;break;}
+        }
+        if(!l1){l1=words.slice(0,Math.ceil(words.length/2)).join(' ');l2=words.slice(Math.ceil(words.length/2)).join(' ');}
+        lines=[l1,l2];
+      }
+      // Measure widest line
+      let chipW=maxChipW;
+      const tMeasure2=svgEl('text',{'font-size':fontSize,'font-family':'DM Sans,sans-serif'});
+      nodeG.appendChild(tMeasure2);
+      chipW=Math.min(maxChipW, padL+Math.max(...lines.map(l=>{tMeasure2.textContent=l;return tMeasure2.getComputedTextLength()||l.length*5.2;}))+padR);
+      nodeG.removeChild(tMeasure2);
+      const chipH=lines.length>1?24:20;
+      const x0=p.x;
+      grp.appendChild(svgEl('rect',{x:x0,y:p.y-chipH/2,width:chipW,height:chipH,rx:'3',fill:'transparent'}));
+      const bg=svgEl('rect',{x:x0,y:p.y-chipH/2,width:chipW,height:chipH,rx:'3',fill:'rgba(255,255,255,.06)',stroke:'rgba(255,255,255,.18)','stroke-width':'0.8'});
+      const bar=svgEl('rect',{x:x0,y:p.y-chipH/2,width:3,height:chipH,rx:'3',fill:accentCol,opacity:'0.7'});
+      grp.appendChild(bg);grp.appendChild(bar);
+      const totalTH=lines.length*lineH;
+      lines.forEach((l,li)=>{
+        const t=svgEl('text',{x:x0+padL,y:p.y-totalTH/2+li*lineH+lineH*0.85,fill:'rgba(255,255,255,.75)','font-size':fontSize,'font-family':'DM Sans,sans-serif',style:'pointer-events:none'});
+        t.textContent=l;grp.appendChild(t);
+      });
+      const allTxts=grp.querySelectorAll?grp.querySelectorAll('text'):[];
+      grp.addEventListener('mouseenter',e=>{bg.setAttribute('fill','rgba(255,255,255,.12)');bg.setAttribute('stroke','rgba(255,255,255,.4)');grp.querySelectorAll('text').forEach(t=>t.setAttribute('fill','rgba(255,255,255,.95)'));startHoverTT(key,e);});
+      grp.addEventListener('mouseleave',()=>{bg.setAttribute('fill','rgba(255,255,255,.06)');bg.setAttribute('stroke','rgba(255,255,255,.18)');grp.querySelectorAll('text').forEach(t=>t.setAttribute('fill','rgba(255,255,255,.75)'));clearHoverTT();});
+    } else if(el.type==='Workstream'){
+      // Workstreams are not shown on slide 5 — visible on slide 4 only
+      return;
+    }
+
+    grp.addEventListener('mouseenter',e=>{startHoverTT(key,e);});
+    grp.addEventListener('mousemove', e=>{clearHoverTT();startHoverTT(key,e);});
+    grp.addEventListener('mouseleave',()=>{clearHoverTT();});
+    grp.addEventListener('click',e=>{e.stopPropagation();netClick(key);});
+    nodeG.appendChild(grp);
+  }
+  Object.keys(pos).forEach(drawNode);
+
+  function labelHasYear(label){
+    if(netActiveYear==='all')return true;
+    const yrs=ELEMENTS[label]?.years||[];
+    if(!yrs.length)return false;
+    if(netActiveYear==='pre2022')return yrs.some(y=>y<2022);
+    return yrs.includes(parseInt(netActiveYear));
+  }
+
+  // Build a cache of connections by label for quick lookup
+  function buildAdjacency(){
+    const adj={};
+    CONNECTIONS.forEach(c=>{
+      if(!adj[c.from])adj[c.from]=[];
+      if(!adj[c.to])adj[c.to]=[];
+      adj[c.from].push({label:c.to,  type:c.type});
+      adj[c.to  ].push({label:c.from,type:c.type});
+    });
+    return adj;
+  }
+
+  function computeYearVisibleSet(){
+    if(netActiveYear==='all')return null;
+    const adj=buildAdjacency();
+
+    // Initiatives and Outputs: visible ONLY if they directly carry the year tag
+    const tagged=new Set(Object.keys(ELEMENTS).filter(labelHasYear));
+    const visible=new Set(tagged);
+
+    // Partners: visible if directly connected to a year-tagged initiative/output
+    Object.keys(ELEMENTS).forEach(label=>{
+      if(ELEMENTS[label]?.type!=='Partner')return;
+      if((adj[label]||[]).some(nb=>tagged.has(nb.label)))visible.add(label);
+    });
+
+    // Levels of Leadership: visible if directly connected to a year-tagged initiative
+    Object.keys(ELEMENTS).forEach(label=>{
+      if(ELEMENTS[label]?.type!=='Level of Leadership')return;
+      if((adj[label]||[]).some(nb=>tagged.has(nb.label)&&ELEMENTS[nb.label]?.type==='Initiative'))visible.add(label);
+    });
+
+    // Levers: visible if connected to a year-tagged initiative OR a visible Level of Leadership
+    Object.keys(ELEMENTS).forEach(label=>{
+      if(ELEMENTS[label]?.type!=='Lever')return;
+      if((adj[label]||[]).some(nb=>tagged.has(nb.label)||visible.has(nb.label)))visible.add(label);
+    });
+
+    // Cohorts: visible if any connected lever is visible
+    Object.keys(ELEMENTS).forEach(label=>{
+      if(ELEMENTS[label]?.type!=='Cohort')return;
+      if((adj[label]||[]).some(nb=>visible.has(nb.label)))visible.add(label);
+    });
+
+    // Context + Workstream always visible
+    Object.keys(ELEMENTS).forEach(l=>{
+      const t=ELEMENTS[l]?.type||'';
+      if(t==='Context'||t==='Workstream')visible.add(l);
+    });
+
+    return visible;
+  }
+
+  function nodeVisible(label, yearSet){
+    const el=ELEMENTS[label];if(!el)return false;
+    const t=el.type,c=el.category||'';
+    if(t==='Context'||t==='Workstream')return true;
+    if(netActiveType!=='all'&&t!==netActiveType)return false;
+    if(netActiveCat!=='all'&&c!==netActiveCat)return false;
+    if(yearSet!==null&&!yearSet.has(label))return false;
+    return true;
+  }
+
+  function applyFilters(){
+    const anyFilter=netActiveType!=='all'||netActiveCat!=='all'||netActiveYear!=='all';
+    const yearSet=computeYearVisibleSet(); // null when year='all'
+
+    nodeG.querySelectorAll('g').forEach(n=>{
+      n.style.opacity=nodeVisible(n.dataset.label,yearSet)?'':'0.1';
+    });
+
+    edgeG.querySelectorAll('path').forEach(p=>{
+      const f=p.getAttribute('data-from'),t=p.getAttribute('data-to');
+      const fVis=nodeVisible(f,yearSet),tVis=nodeVisible(t,yearSet);
+      if(fVis&&tVis){
+        p.setAttribute('opacity','0.5');
+        p.setAttribute('stroke-width',p._sw||'2');
+      } else if(fVis||tVis){
+        p.setAttribute('opacity',anyFilter?'0.05':'0.4');
+        p.setAttribute('stroke-width',(parseFloat(p._sw||2)*0.6).toFixed(1));
+      } else {
+        p.setAttribute('opacity','0.02');
+        p.setAttribute('stroke-width','0.5');
+      }
+    });
+  }
+  document.querySelectorAll('#slide5 .fbg .fb[data-type]').forEach(btn=>{btn.onclick=function(){document.querySelectorAll('#slide5 .fbg .fb[data-type]').forEach(b=>b.classList.remove('active'));this.classList.add('active');netActiveType=this.dataset.type;applyFilters();};});
+  document.querySelectorAll('#cat-filters .cfb').forEach(btn=>{btn.onclick=function(){document.querySelectorAll('#cat-filters .cfb').forEach(b=>b.classList.remove('active'));this.classList.add('active');netActiveCat=this.dataset.cat;applyFilters();};});
+  document.querySelectorAll('#year-filters .fb').forEach(btn=>{btn.onclick=function(){document.querySelectorAll('#year-filters .fb').forEach(b=>b.classList.remove('active'));this.classList.add('active');netActiveYear=this.dataset.year;applyFilters();};});
+
+  setupPZ(canvas,svg,g,netTF,()=>applyNTF(g));
+  document.getElementById('net-zi').onclick=()=>{netTF.scale=Math.min(netTF.scale*1.25,5);applyNTF(g);};
+  document.getElementById('net-zo').onclick=()=>{netTF.scale=Math.max(netTF.scale/1.25,.15);applyNTF(g);};
+  document.getElementById('net-zf').onclick=()=>{netTF={x:tx,y:ty,scale:sc};applyNTF(g);};
+}
+} // end init()
+init();
+</script>
+</body></html>'''
+
+HTML = HTML.replace('ELEMENTS_URL_PLACEHOLDER', ELEMENTS_URL) \
+           .replace('CONNECTIONS_URL_PLACEHOLDER', CONNECTIONS_URL) \
+           .replace('FALLBACK_EL_PLACEHOLDER', FALLBACK_EL_JS) \
+           .replace('FALLBACK_CN_PLACEHOLDER', FALLBACK_CN_JS)
+with open('/home/claude/mlf-final.html','w') as f: f.write(HTML)
+print("Written", len(HTML), "bytes")
