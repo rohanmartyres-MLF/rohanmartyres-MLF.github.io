@@ -21,10 +21,11 @@ HTML = '''<!DOCTYPE html>
 :root{--navy:#0f1f35;--navy2:#172844;--gold:#c8963e;--gold-light:#e8b96a;--cream:#f7f3ed;--cream2:#ede7dd;--slate:#4a5d73;--sl:#7a8fa6;--text:#1a2635;--textm:#4a5568;--textd:#8898aa;--cc:#3b9ede;--ci:#e8b84a;--ce:#5cb85c;--cy:#e87c3e;--ca:#d9534f}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM Sans',sans-serif}
-#app{width:100vw;height:100vh;display:flex;flex-direction:column}
+#app{width:100vw;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 #slides{flex:1;min-height:0;position:relative;overflow:hidden}
-.slide{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .5s;display:flex;flex-direction:column;overflow:hidden}
-.slide.active{opacity:1;pointer-events:all}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;overflow:hidden}
+.slide.active{display:flex;animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
 #nav{background:var(--navy);border-top:1px solid rgba(200,150,62,.2);padding:10px 32px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:100}
 .nav-dots{display:flex;gap:8px;align-items:center}
 .nav-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.2);border:none;cursor:pointer;transition:background .25s,transform .25s;padding:0}
@@ -34,8 +35,8 @@ html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM San
 .nav-btn:disabled{opacity:.3;cursor:default}
 .nav-lbl{color:var(--sl);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
 /* TEXT SLIDES */
-.ts{background:var(--cream);align-items:center;justify-content:center}
-.ti{max-width:740px;width:90%;padding:48px 0}
+.ts{background:var(--cream);align-items:center;justify-content:flex-start;overflow:hidden}
+.ti{max-width:740px;width:90%;padding:64px 0 48px;overflow:hidden}
 .ey{font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:20px}
 .h1{font-family:'Libre Baskerville',serif;font-size:clamp(26px,3.5vw,40px);font-weight:700;color:var(--text);line-height:1.2;margin-bottom:28px}
 .bd{font-size:16px;color:var(--textm);line-height:1.85}
@@ -46,11 +47,6 @@ html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM San
 .bd a{color:var(--gold);text-decoration:none;border-bottom:1px solid rgba(200,150,62,.3)}
 .dv{width:48px;height:2px;background:var(--gold);margin:28px 0;border-radius:1px}
 .wm{font-size:11px;color:var(--textd);margin-top:40px}
-.igrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
-.icard{background:white;border:1px solid var(--cream2);border-radius:6px;padding:18px 20px;display:flex;gap:14px;align-items:flex-start}
-.iico{width:32px;height:32px;border-radius:50%;background:var(--navy);color:white;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;font-weight:600}
-.itxt{font-size:14px;color:var(--textm);line-height:1.6}
-.itxt b{color:var(--text)}
 /* MAP SHARED */
 .mhdr{background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.07);padding:8px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0;z-index:10}
 .fbg{display:flex;gap:6px}
@@ -74,18 +70,46 @@ html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM San
 .zb:hover{background:rgba(200,150,62,.2);border-color:var(--gold)}
 .zb[data-tip]::after{content:attr(data-tip);position:absolute;right:34px;top:50%;transform:translateY(-50%);background:var(--navy2);border:1px solid rgba(200,150,62,.3);color:rgba(255,255,255,.9);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:400;white-space:nowrap;padding:4px 9px;border-radius:4px;pointer-events:none;opacity:0;transition:opacity 0s}
 .zb[data-tip]:hover::after{opacity:1;transition:opacity 0s}
+#tour{position:fixed;z-index:9000;max-width:280px;background:var(--cream);border:1px solid rgba(200,150,62,.4);border-radius:8px;padding:16px 18px;box-shadow:0 6px 28px rgba(0,0,0,.35);display:none}
+#tour.vis{display:block}
+#tour-step{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+#tour-title{font-family:'Libre Baskerville',serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.3}
+#tour-body{font-size:12px;color:var(--textm);line-height:1.6;margin-bottom:14px}
+#tour-arrow{position:absolute;width:10px;height:10px;background:var(--cream);border:1px solid rgba(200,150,62,.4);transform:rotate(45deg)}
+.tour-btn{font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;padding:6px 14px;border-radius:3px;cursor:pointer;transition:background .15s}
+#tour-next{background:var(--navy);color:var(--gold-light);border:1px solid var(--navy)}
+#tour-next:hover{background:#1a3050}
+#tour-skip{background:transparent;color:var(--textd);border:1px solid rgba(0,0,0,.12);margin-right:8px}
+#tour-skip:hover{background:rgba(0,0,0,.05)}
 /* SLIDE 4 */
 #slide4{background:var(--navy)}
-#loi-canvas{flex:1;min-height:0;width:100%;overflow:hidden;position:relative;cursor:grab}
+#loi-canvas{flex:1;min-height:0;width:100%;position:relative;cursor:grab}
 #loi-canvas:active{cursor:grabbing}
 #loi-svg{width:100%;height:100%;display:block}
 /* SLIDE 5 */
 #slide5{background:#0a1628}
-#net-canvas{flex:1;min-height:0;width:100%;position:relative;overflow:hidden;cursor:grab}
+#net-canvas{flex:1;min-height:0;width:100%;position:relative;cursor:grab}
 #net-canvas:active{cursor:grabbing}
 #net-svg{width:100%;height:100%;display:block}
 /* TOOLTIP */
 #tt{position:fixed;z-index:9999;max-width:340px;min-width:220px;background:var(--navy2);border:1px solid rgba(200,150,62,.3);border-radius:6px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.5);opacity:0;transition:opacity .15s;pointer-events:none;max-height:75vh;overflow-y:auto}
+.map-panel{position:absolute;top:0;right:0;bottom:0;width:280px;background:rgba(247,243,237,0.97);border-left:1px solid rgba(200,150,62,.25);display:flex;flex-direction:column;z-index:20;transform:translateX(100%);transition:transform .25s ease;pointer-events:none}
+.map-panel.vis{transform:translateX(0);pointer-events:all}
+.map-panel-inner{flex:1;overflow-y:auto;padding:16px 16px 12px}
+.map-panel-close{position:absolute;top:10px;right:10px;background:transparent;border:none;cursor:pointer;font-size:16px;color:var(--textd);line-height:1;padding:2px 6px;border-radius:3px}
+.map-panel-close:hover{background:rgba(0,0,0,.08);color:var(--text)}
+.mp-type{font-size:9px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.mp-title{font-family:'Libre Baskerville',serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px;line-height:1.35}
+.mp-body{font-size:12px;color:var(--textm);line-height:1.7}
+.mp-body b,.mp-body strong{color:var(--text)}
+.mp-body a{color:var(--gold)}
+.mp-body ul,.mp-body ol{padding-left:16px;margin:6px 0}
+.mp-body li{margin-bottom:4px}
+.mp-lists{margin-top:12px;border-top:1px solid rgba(0,0,0,.08);padding-top:10px;display:flex;flex-direction:column;gap:10px}
+.mp-list-title{font-size:9px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.mp-chips{display:flex;flex-wrap:wrap;gap:4px}
+.mp-chip{font-size:11px;background:rgba(200,150,62,.08);border:1px solid rgba(200,150,62,.25);border-radius:3px;padding:4px 9px;color:var(--textm);line-height:1.4;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.mp-chip:hover{background:rgba(200,150,62,.2);border-color:var(--gold);color:var(--text)}
 #tt.vis{opacity:1;pointer-events:all}
 #tt .ttype{font-size:9px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
 #tt .ttitle{font-family:'Libre Baskerville',serif;font-size:14px;color:white;margin-bottom:8px;line-height:1.35}
@@ -105,7 +129,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM San
 <div id="app">
  <div id="slides">
   <div class="slide ts active" id="slide1"><div class="ti">
-   <div class="ey">Menzies Leadership Foundation · 2025</div>
+   <div class="ey">Menzies Leadership Foundation</div>
    <h1 class="h1">Fostering future-fit leadership</h1><div class="dv"></div>
    <div class="bd"><p>Humanity's astounding progress through the Industrial and Technological revolutions has created an immense challenge and opportunity for the 21st century.</p><p>Navigating this in Australia requires:</p>
    <ol><li><b>A leadership hypothesis:</b> A diagnosis of the leadership challenges for the 21st century, and a hypothesis on how to address them; and,</li>
@@ -119,15 +143,6 @@ html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM San
    <li><b>Systemic levers</b> for impact at scale</li><li><b>Initiatives</b> to foster future-fit leadership</li>
    <li><b>Outputs</b> of our and partners' collective endeavours</li></ul></div>
   </div></div>
-  <div class="slide ts" id="slide3"><div class="ti">
-   <div class="ey">Guide</div><h1 class="h1">Using the maps</h1><div class="dv"></div>
-   <div class="igrid">
-    <div class="icard"><div class="iico">⊕</div><div class="itxt"><b>Zoom</b> in and out using the + and − buttons at top right of each map.</div></div>
-    <div class="icard"><div class="iico">⊞</div><div class="itxt"><b>Filter</b> items using the category and year buttons at the top of each map.</div></div>
-    <div class="icard"><div class="iico">◎</div><div class="itxt"><b>Click</b> any element to see its description and highlight direct connections.</div></div>
-    <div class="icard"><div class="iico">⇄</div><div class="itxt"><b>Navigate</b> slides using the Back and Next buttons below.</div></div>
-   </div>
-  </div></div>
   <div class="slide" id="slide4">
    <div class="mhdr">
     <div class="fbg" id="loi-filters">
@@ -137,8 +152,21 @@ html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM San
      <button class="fb" data-show="Partner">Partners</button>
     </div>
    </div>
-   <div id="loi-canvas">
-    <svg id="loi-svg"></svg>
+   <div id="loi-canvas" style="flex:1;min-width:0;min-height:0;position:relative;">
+     <svg id="loi-svg"></svg>
+     <div id="loi-panel" class="map-panel">
+      <button class="map-panel-close" id="loi-panel-close">×</button>
+      <div class="map-panel-inner">
+       <div class="mp-type" id="loi-panel-type"></div>
+       <div class="mp-title" id="loi-panel-title"></div>
+       <div class="mp-body" id="loi-panel-body"></div>
+      </div>
+     </div>
+     <div id="loi-hypothesis" style="position:absolute;top:16px;left:18px;width:280px;background:rgba(247,243,237,0.97);border:1px solid rgba(200,150,62,.3);border-radius:6px;padding:16px 18px;box-shadow:0 4px 20px rgba(0,0,0,.25);z-index:5;pointer-events:none;">
+      <div class="mp-type">Context</div>
+      <div class="mp-title">Our leadership hypothesis</div>
+      <div class="mp-body">Consolidating and further enhancing human progress requires a diagnosis of the underlying leadership challenge for the 21st Century, a hypothesis what is needed to address it, and a collective effort in response.</div>
+     </div>
     <div class="lgd">
      <div class="lgd-t">Legend</div>
      <div class="lgd-i"><span class="lgd-s sq" style="background:var(--cc);"></span> Community resilience</div>
@@ -151,8 +179,9 @@ html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM San
    </div>
   </div>
   <div class="slide" id="slide5">
-   <div class="mhdr" style="flex-direction:column;align-items:flex-start;gap:6px;">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+   <div class="mhdr" style="flex-direction:column;align-items:flex-start;gap:5px;padding:6px 16px;">
+    <div style="display:flex;align-items:center;gap:8px;">
+     
      <div class="fbg">
       <button class="fb active" data-type="all">All components</button>
       <button class="fb" data-type="Cohort">Cohorts</button>
@@ -161,7 +190,9 @@ html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM San
       <button class="fb" data-type="Output">Outputs</button>
       <button class="fb" data-type="Partner">Partners</button>
      </div>
-     <div style="width:1px;height:18px;background:rgba(255,255,255,.1);"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+     
      <div class="fbg" id="cat-filters">
       <button class="cfb active" data-cat="all">All categories</button>
       <button class="cfb" data-cat="Community resilience">Community resilience</button>
@@ -172,6 +203,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM San
      </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
+     
      <div class="fbg" id="year-filters">
       <button class="fb active" data-year="all">All years</button>
       <button class="fb" data-year="pre2022">Pre 2022</button>
@@ -185,6 +217,19 @@ html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM San
    </div>
    <div id="net-canvas">
     <svg id="net-svg"></svg>
+    <div id="net-panel" class="map-panel">
+     <button class="map-panel-close" id="net-panel-close">×</button>
+     <div class="map-panel-inner">
+      <div class="mp-type" id="net-panel-type"></div>
+      <div class="mp-title" id="net-panel-title"></div>
+      <div class="mp-body" id="net-panel-body"></div>
+     </div>
+    </div>
+    <div id="net-hypothesis" style="position:absolute;top:16px;left:18px;width:280px;background:rgba(247,243,237,0.97);border:1px solid rgba(200,150,62,.3);border-radius:6px;padding:16px 18px;box-shadow:0 4px 20px rgba(0,0,0,.25);z-index:5;pointer-events:none;">
+     <div class="mp-type">Our strategy</div>
+     <div class="mp-title">Creating a future-fit Australia</div>
+     <div class="mp-body">We and our partners work through a portfolio of initiatives to activate selected systemic levers and deliver a variety of outputs to strengthen leadership across different cohorts of Australians, and embed future-fit leadership nationally.</div>
+    </div>
     <div class="lgd">
      <div class="lgd-t">Legend</div>
      <div class="lgd-i"><span class="lgd-s" style="background:var(--cc);"></span> Community resilience</div>
@@ -215,14 +260,27 @@ html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM San
   <button class="nav-btn" id="btn-next">Next →</button>
  </div>
 </div>
-<div id="tt"><div class="ttype" id="tt-type"></div><div class="ttitle" id="tt-title"></div><div class="tbody" id="tt-body"></div></div>
-<div id="loading" style="position:fixed;inset:0;background:var(--navy);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
-  <div style="font-family:'Libre Baskerville',serif;font-size:22px;color:var(--gold-light);letter-spacing:.05em;">Fostering Future-Fit Leadership</div>
-  <div style="display:flex;gap:8px;align-items:center;">
-    <div class="spin" style="width:18px;height:18px;border:2px solid rgba(200,150,62,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;"></div>
-    <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:rgba(255,255,255,.45);letter-spacing:.06em;" id="load-msg">Loading data…</span>
+<div id="tour">
+  <div id="tour-arrow"></div>
+  <div id="tour-step"></div>
+  <div id="tour-title"></div>
+  <div id="tour-body"></div>
+  <div style="display:flex;align-items:center;justify-content:flex-end;">
+    <button class="tour-btn" id="tour-skip">Skip tour</button>
+    <button class="tour-btn" id="tour-next">Next →</button>
   </div>
-  <div id="load-err" style="font-size:12px;color:rgba(217,83,79,.8);display:none;max-width:400px;text-align:center;"></div>
+</div>
+<div id="tt"><div class="ttype" id="tt-type"></div><div class="ttitle" id="tt-title"></div><div class="tbody" id="tt-body"></div></div>
+<div id="loading" style="position:fixed;inset:0;background:var(--navy);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div style="font-family:'Libre Baskerville',serif;font-size:clamp(22px,3vw,36px);color:var(--gold-light);letter-spacing:.05em;text-align:center;padding:0 32px;">Fostering Future-Fit Leadership</div>
+  <div style="font-family:'DM Sans',sans-serif;font-size:clamp(13px,1.5vw,17px);color:rgba(255,255,255,.5);letter-spacing:.04em;text-align:center;white-space:nowrap;max-width:90vw;padding:0 16px;line-height:1.6;overflow-wrap:break-word;word-break:keep-all;">A hypothesis and strategy to address the 21st century leadership challenge.</div>
+  <div style="width:48px;height:1px;background:rgba(200,150,62,.35);margin:8px 0;"></div>
+  <div id="load-status" style="display:flex;gap:8px;align-items:center;">
+    <div class="spin" style="width:16px;height:16px;border:2px solid rgba(200,150,62,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;"></div>
+    <span style="font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;" id="load-msg">Loading data…</span>
+  </div>
+  <button id="enter-btn" style="display:none;margin-top:12px;background:transparent;border:1px solid rgba(200,150,62,.5);color:var(--gold-light);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:12px 36px;border-radius:3px;cursor:pointer;transition:background .2s,border-color .2s;" onmouseover="this.style.background='rgba(200,150,62,.12)';this.style.borderColor='var(--gold)'" onmouseout="this.style.background='transparent';this.style.borderColor='rgba(200,150,62,.5)'">Enter Presentation →</button>
+  <div id="load-err" style="font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(255,255,255,.4);letter-spacing:.08em;text-transform:uppercase;display:none;max-width:400px;text-align:center;line-height:1.6;padding:0 32px;"></div>
 </div>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 <script>
@@ -341,7 +399,7 @@ async function loadSheetData() {
 }
 
 const CC={'Community resilience':'#3b9ede','Indigenous self-determination':'#e8b84a','Education outcomes':'#5cb85c','Youth development':'#e87c3e','Insight and influence':'#d9534f','':'#8898aa'};
-const SL=['Introduction','The Challenge','How to Use','Lines of Inquiry','Full Network Map','Learn More'];
+const SL=['Introduction','The Challenge','Lines of Inquiry','Full Network Map','Learn More'];
 
 async function init() {
   const loadEl = document.getElementById('loading');
@@ -349,15 +407,24 @@ async function init() {
   const errEl  = document.getElementById('load-err');
 
   const result = await loadSheetData();
+  const enterBtn = document.getElementById('enter-btn');
+  const statusEl = document.getElementById('load-status');
+
   if (!result.ok) {
+    statusEl.style.display = 'none'; // hide spinner on failure too
     msgEl.textContent = 'Using offline snapshot';
-    errEl.innerHTML = `Could not reach Google Sheets (<em>${result.error}</em>).<br>Showing last saved data. Open via a web server for live updates.`;
+    errEl.innerHTML = `(Cannot access latest data feed. Using last saved data set.)`;
     errEl.style.display = 'block';
-    await new Promise(r => setTimeout(r, 2500));
   } else {
-    msgEl.textContent = 'Live data loaded ✓';
-    await new Promise(r => setTimeout(r, 300));
+    statusEl.style.display = 'none'; // hide spinner once loaded
   }
+
+  // Show Enter button and wait for click
+  enterBtn.style.display = 'block';
+  await new Promise(resolve => { enterBtn.onclick = resolve; });
+  loadEl.style.opacity = '0';
+  loadEl.style.transition = 'opacity .4s';
+  await new Promise(r => setTimeout(r, 400));
   loadEl.style.display = 'none';
 
   let cur=0;
@@ -365,7 +432,55 @@ async function init() {
   const dotsEl=document.getElementById('nav-dots');
   const nlbl=document.getElementById('nav-lbl');
   SL.forEach((_,i)=>{const d=document.createElement('button');d.className='nav-dot'+(i===0?' active':'');d.onclick=()=>goTo(i);dotsEl.appendChild(d);});
-function goTo(idx){slides[cur].classList.remove('active');dotsEl.children[cur].classList.remove('active');cur=idx;slides[idx].classList.add('active');dotsEl.children[idx].classList.add('active');nlbl.textContent=SL[idx]+' — '+(idx+1)+' of '+slides.length;document.getElementById('btn-back').disabled=idx===0;document.getElementById('btn-next').disabled=idx===slides.length-1;if(idx===3&&!loiBuilt)requestAnimationFrame(()=>requestAnimationFrame(buildLOI));if(idx===4&&!netBuilt)requestAnimationFrame(()=>requestAnimationFrame(buildNet));hideTT();}
+function goTo(idx){
+  slides[cur].classList.remove('active');
+  dotsEl.children[cur].classList.remove('active');
+  // Reset previous slide state
+  clearHoverTT();
+  hideTT();
+  // Reset LOI state when leaving slide 3
+  if(cur===2){
+    loiSel=null;
+    if(typeof loiReset==='function')loiReset();
+    // Reset LOI filter buttons to 'All'
+    document.querySelectorAll('#loi-filters .fb').forEach(b=>b.classList.remove('active'));
+    const loiAll=document.querySelector('#loi-filters .fb[data-show=\"all\"]');
+    if(loiAll)loiAll.classList.add('active');
+  }
+  // Reset net state when leaving slide 4
+  if(cur===3){
+    netSel=null;
+    if(typeof netReset==='function')netReset();
+    // Reset net filter buttons and state to 'All'
+    netActiveType='all';netActiveCat='all';netActiveYear='all';
+    document.querySelectorAll('#slide5 .fbg .fb[data-type]').forEach(b=>b.classList.remove('active'));
+    const typeAll=document.querySelector('#slide5 .fbg .fb[data-type=\"all\"]');
+    if(typeAll)typeAll.classList.add('active');
+    document.querySelectorAll('#cat-filters .cfb').forEach(b=>b.classList.remove('active'));
+    const catAll=document.querySelector('#cat-filters .cfb[data-cat=\"all\"]');
+    if(catAll)catAll.classList.add('active');
+    document.querySelectorAll('#year-filters .fb').forEach(b=>b.classList.remove('active'));
+    const yearAll=document.querySelector('#year-filters .fb[data-year=\"all\"]');
+    if(yearAll)yearAll.classList.add('active');
+  }
+  cur=idx;
+  slides[idx].classList.add('active');
+  dotsEl.children[idx].classList.add('active');
+  nlbl.textContent=SL[idx]+' — '+(idx+1)+' of '+slides.length;
+  document.getElementById('btn-back').disabled=idx===0;
+  document.getElementById('btn-next').disabled=idx===slides.length-1;
+  if(idx===2){
+    setActivePanel('loi-panel');
+    if(!loiBuilt)requestAnimationFrame(()=>requestAnimationFrame(buildLOI));
+    else if(typeof applyLOIFilter==='function')applyLOIFilter(); // reapply 'All' filter on revisit
+  } else if(idx===3){
+    setActivePanel('net-panel');
+    if(!netBuilt)requestAnimationFrame(()=>requestAnimationFrame(buildNet));
+    else if(typeof applyFilters==='function')applyFilters();
+  } else {
+    activePanel=null;
+  }
+}
 document.getElementById('btn-back').onclick=()=>cur>0&&goTo(cur-1);
 document.getElementById('btn-next').onclick=()=>cur<slides.length-1&&goTo(cur+1);
 document.getElementById('btn-back').disabled=true;
@@ -374,14 +489,21 @@ nlbl.textContent=SL[0]+' — 1 of '+slides.length;
 // ── TOOLTIP ──
 const tt=document.getElementById('tt'),ttType=document.getElementById('tt-type'),ttTitle=document.getElementById('tt-title'),ttBody=document.getElementById('tt-body');
 let loiClickFn=null,netClickFn=null;
+let loiResetFn=null,netResetFn=null;
+let applyFiltersFn=null,applyLOIFilterFn=null;
+function loiReset(){if(loiResetFn)loiResetFn();}
+function netReset(){if(netResetFn)netResetFn();}
+function applyFilters(){if(applyFiltersFn)applyFiltersFn();}
+function applyLOIFilter(){if(applyLOIFilterFn)applyLOIFilterFn();}
 let hoverTimer=null;
 function startHoverTT(label,e){
   clearTimeout(hoverTimer);
   hoverTimer=setTimeout(()=>showTT(label,e.clientX,e.clientY),600);
 }
 function clearHoverTT(){clearTimeout(hoverTimer);}
-function navTo(label){if(!ELEMENTS[label])return;hideTT();if(cur===3&&loiClickFn)loiClickFn(label);else if(cur===4&&netClickFn)netClickFn(label);}
+function navTo(label){if(!ELEMENTS[label])return;hideTT();if(cur===2&&loiClickFn)loiClickFn(label);else if(cur===3&&netClickFn)netClickFn(label);}
 tt.addEventListener('click',e=>{const t=e.target.closest('[data-nav]');if(t){e.stopPropagation();navTo(t.dataset.nav);}});
+document.addEventListener('click',e=>{const t=e.target.closest('[data-nav]');if(t&&activePanel){e.stopPropagation();navTo(t.dataset.nav);}});
 function buildLists(label){
   const el=ELEMENTS[label];if(!el)return'';
   const type=el.type,secs=[];
@@ -408,30 +530,64 @@ function buildLists(label){
     if(qs.length)secs.push({t:'Our lines of inquiry',items:qs});
   }
   if(!secs.length)return'';
-  return'<div class="tlists">'+secs.map(s=>{
+  // Use panel (light) or tooltip (dark) styles
+  const usePanel=!!activePanel;
+  const listsClass=usePanel?'mp-lists':'tlists';
+  const titleClass=usePanel?'mp-list-title':'tlt';
+  const chipsClass=usePanel?'mp-chips':'tchips';
+  const chipClass =usePanel?'mp-chip':'tchip';
+  const liStyle   =usePanel?'margin-bottom:4px;font-size:11px;cursor:pointer;color:var(--textm);':'margin-bottom:4px;color:rgba(255,255,255,.8);font-size:11px;cursor:pointer;';
+  const liHoverOn =usePanel?'this.style.color=\\x27var(--gold)\\x27':'this.style.color=\\x27#e8b96a\\x27';
+  const liHoverOff=usePanel?'this.style.color=\\x27var(--textm)\\x27':'this.style.color=\\x27rgba(255,255,255,.8)\\x27';
+  return'<div class="'+listsClass+'">'+secs.map(s=>{
     const ul=s.t==='Our lines of inquiry';
     const inner=ul
-      ?'<ul style="margin:4px 0 0;padding-left:16px;">'+s.items.map(i=>'<li data-nav="'+i.replace(/"/g,'&quot;')+'" style="margin-bottom:4px;color:rgba(255,255,255,.8);font-size:11px;cursor:pointer;" onmouseenter="this.style.color=\\x27#e8b96a\\x27" onmouseleave="this.style.color=\\x27rgba(255,255,255,.8)\\x27">'+i+'</li>').join('')+'</ul>'
-      :'<div class="tchips">'+s.items.map(i=>'<span class="tchip" data-nav="'+i.replace(/"/g,'&quot;')+'">'+i+'</span>').join('')+'</div>';
-    return'<div><div class="tlt">'+s.t+'</div>'+inner+'</div>';
+      ?'<ul style="margin:4px 0 0;padding-left:16px;">'+s.items.map(i=>'<li data-nav="'+i.replace(/"/g,'&quot;')+'" style="'+liStyle+'" onmouseenter="'+liHoverOn+'" onmouseleave="'+liHoverOff+'">'+i+'</li>').join('')+'</ul>'
+      :'<div class="'+chipsClass+'">'+s.items.map(i=>'<span class="'+chipClass+'" data-nav="'+i.replace(/"/g,'&quot;')+'">'+i+'</span>').join('')+'</div>';
+    return'<div><div class="'+titleClass+'">'+s.t+'</div>'+inner+'</div>';
   }).join('')+'</div>';
 }
+// Active map panel references (set when map slides initialise)
+let activePanel=null, activePanelType=null, activePanelTitle=null, activePanelBody=null;
+
+function setActivePanel(panelId){
+  activePanel      = document.getElementById(panelId);
+  activePanelType  = document.getElementById(panelId.replace('panel','panel-type'));
+  activePanelTitle = document.getElementById(panelId.replace('panel','panel-title'));
+  activePanelBody  = document.getElementById(panelId.replace('panel','panel-body'));
+}
+
 function showTT(label,x,y){
   const el=ELEMENTS[label];if(!el)return;
-  ttType.textContent=el.type;ttTitle.textContent=label;
   let d=(el.description||'').replace(/\\n/g,'<br>').replace(/<a /g,'<a target="_blank" rel="noopener" ');
   d=d.replace(/(\\s*<br\\s*\\/?>\\s*)+$/,'').trimEnd();
-  ttBody.innerHTML=d+buildLists(label);
-  tt.classList.add('vis');
-  const tw=tt.offsetWidth||320,th=tt.offsetHeight||200;
-  let lx=x+16,ly=y-10;
-  if(lx+tw>window.innerWidth-12)lx=x-tw-16;
-  if(ly+th>window.innerHeight-12)ly=window.innerHeight-th-12;
-  if(ly<10)ly=10;
-  tt.style.left=lx+'px';tt.style.top=ly+'px';
+  const content=d+buildLists(label);
+  if(activePanel){
+    // Use right panel
+    activePanelType.textContent=el.type;
+    activePanelTitle.textContent=label;
+    activePanelBody.innerHTML=content;
+    activePanel.classList.add('vis');
+  } else {
+    // Fallback: floating tooltip (text slides)
+    ttType.textContent=el.type;ttTitle.textContent=label;
+    ttBody.innerHTML=content;
+    tt.classList.add('vis');
+    const tw=tt.offsetWidth||320,th=tt.offsetHeight||200;
+    let lx=x+16,ly=y-10;
+    if(lx+tw>window.innerWidth-12)lx=x-tw-16;
+    if(ly+th>window.innerHeight-12)ly=window.innerHeight-th-12;
+    if(ly<10)ly=10;
+    tt.style.left=lx+'px';tt.style.top=ly+'px';
+  }
 }
-function hideTT(){tt.classList.remove('vis');}
-document.addEventListener('click',e=>{if(!e.target.closest('#tt')&&!e.target.closest('[data-label]'))hideTT();});
+function hideTT(){
+  tt.classList.remove('vis');
+  if(activePanel)activePanel.classList.remove('vis');
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#tt')&&!e.target.closest('.map-panel')&&!e.target.closest('[data-label]'))hideTT();
+});
 
 function svgEl(t,a){const e=document.createElementNS('http://www.w3.org/2000/svg',t);for(const[k,v]of Object.entries(a||{}))e.setAttribute(k,v);return e;}
 function wrapText(text,maxW){const cpl=Math.floor(maxW/6);if(text.length<=cpl)return[text];const words=text.split(' ');const lines=[];let cur='';words.forEach(w=>{if((cur+' '+w).trim().length>cpl&&cur){lines.push(cur);cur=w;}else cur=(cur+' '+w).trim();});if(cur)lines.push(cur);return lines.slice(0,3);}
@@ -460,12 +616,17 @@ function buildLOI(){
   if(!W||!H){requestAnimationFrame(buildLOI);return;}
   loiBuilt=true;
   svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('width',W);svg.setAttribute('height',H);
-  const cx=W/2,nodes={};
-  nodes['The 21st Century leadership challenge']={x:cx,y:56,w:320,h:44};
-  nodes['Our leadership hypothesis']={x:cx,y:118,w:300,h:40};
+  const mapLeft=300; // content starts right of 280px text box + gap
+  const cx=mapLeft+(W-mapLeft)/2,nodes={};
   const qLbls=['Purpose','Leadership of self','Leading with others','Leading in systems','Inter-cultural leadership','Developing leadership capability'];
   const qW=130,qH=52,qGap=14,qTW=qLbls.length*(qW+qGap)-qGap;
-  qLbls.forEach((q,i)=>nodes[q]={x:cx-qTW/2+i*(qW+qGap)+qW/2,y:192,w:qW,h:qH});
+  // Left-justify question row starting at mapLeft+20
+  const qLeft=mapLeft+20;
+  qLbls.forEach((q,i)=>nodes[q]={x:qLeft+i*(qW+qGap)+qW/2,y:192,w:qW,h:qH});
+  // Centre the two header boxes above the question row span
+  const qRowCx=qLeft+qTW/2;
+  nodes['The 21st Century leadership challenge']={x:qRowCx,y:56,w:320,h:44};
+  nodes['Our leadership hypothesis']={x:qRowCx,y:118,w:300,h:40};
   const qSet=new Set(qLbls);
   const allInits=[...new Set(CONNECTIONS.filter(c=>c.type==='Level of Leadership'&&qSet.has(c.to)&&ELEMENTS[c.from]?.type==='Initiative').map(c=>c.from))];
 
@@ -480,7 +641,8 @@ function buildLOI(){
 
   // ── Relative layout constants ──
   const iW=110, iGap=10;
-  const perRow=Math.floor((W-40)/(iW+iGap));
+  // perRow=6 ensures Innovation fits in 2 rows and total width ≤ 6-LOI row (850px)
+  const perRow=6;
   const INIT_LINE_H=13, INIT_VPAD=6;  // tighter vertical padding each side
   const INIT_H=3*INIT_LINE_H+INIT_VPAD*2; // uniform height: 3 lines + padding = 51px
   const BOX_GAP=8;
@@ -504,14 +666,14 @@ function buildLOI(){
   Object.entries(wsGroups).forEach(([ws,inits],gi)=>{
     if(!inits.length)return;
     if(gi>0) curY+=GROUP_GAP;
-    nodes[ws]={x:20, y:curY+WS_H/2, w:100, h:WS_H, isWsLabel:true};
+    nodes[ws]={x:mapLeft+20, y:curY+WS_H/2, w:100, h:WS_H, isWsLabel:true};
     curY+=WS_H+WS_GAP;
     // Lay out rows — all same height, simple grid
     const numRows=Math.ceil(inits.length/perRow);
     for(let row=0;row<numRows;row++){
       const rowInits=inits.slice(row*perRow,(row+1)*perRow);
       rowInits.forEach((k,col)=>{
-        nodes[k]={x:20+col*(iW+iGap)+iW/2, y:curY+INIT_H/2, w:iW, h:INIT_H};
+        nodes[k]={x:mapLeft+20+col*(iW+iGap)+iW/2, y:curY+INIT_H/2, w:iW, h:INIT_H};
       });
       curY+=INIT_H+(row<numRows-1?BOX_GAP:0);
     }
@@ -525,14 +687,28 @@ function buildLOI(){
   const partnerSet={};
   CONNECTIONS.forEach(c=>{if(c.type==='Partner'&&nodes[c.to]&&ELEMENTS[c.from]?.type==='Partner'){if(!partnerSet[c.from])partnerSet[c.from]=[];partnerSet[c.from].push(c.to);}});
   const allPartners=Object.keys(partnerSet).sort((a,b)=>a.localeCompare(b));
-  const chipH2=20, chipRowH=26, pCols=Math.max(1, Math.floor((W-40)/160)-1);
-  const colW=Math.floor((W-40)/pCols);
+  const chipH2=20, chipRowH=26;
+  // Estimate column width from longest partner name (5.2px per char at font-size 9)
+  const maxNameLen=Math.max(...allPartners.map(p=>p.length),10);
+  const maxChipW=9+maxNameLen*5.2+7;
+  const colGap=12;
+  const colW=Math.ceil(maxChipW)+colGap;
+  const avail=W-mapLeft-40;
+  const maxColsByLOI=Math.floor(qTW/colW); // cap to LOI row width
+  const pCols=Math.max(1,Math.min(Math.floor(avail/colW),maxColsByLOI));
   const pY=curY;
-  allPartners.forEach((p,i)=>nodes[p]={x:20+(i%pCols)*colW, y:pY+(Math.floor(i/pCols))*chipRowH+chipH2/2, w:0, h:chipH2, isPart:true});
+  allPartners.forEach((p,i)=>nodes[p]={x:mapLeft+20+(i%pCols)*colW, y:pY+(Math.floor(i/pCols))*chipRowH+chipH2/2, w:0, h:chipH2, isPart:true});
 
   const totalH=pY+Math.ceil(allPartners.length/pCols)*chipRowH+40;
-  const scl=Math.min(1,(H-40)/totalH);
-  loiTF={x:(W-W*scl)/2, y:20, scale:scl};
+  const contentW=mapLeft+20+qTW; // full width of SVG content
+  const sclH=Math.min(1,(H-40)/totalH);
+  const sclW=Math.min(1,(W-40)/contentW);
+  const scl=Math.min(sclH,sclW);
+  // Scale from content centre so text box at left:18px sits over empty space
+  const contentCx=contentW/2;
+  const tx=W/2-contentCx*scl;
+  const ty=20;
+  loiTF={x:tx, y:ty, scale:scl};
   const defs=svgEl('defs');
   const mk=svgEl('marker',{id:'la',markerWidth:'8',markerHeight:'8',refX:'6',refY:'3',orient:'auto'});
   mk.appendChild(svgEl('path',{d:'M0,0 L0,6 L8,3 z',fill:'rgba(255,255,255,0.25)'}));defs.appendChild(mk);svg.appendChild(defs);
@@ -540,7 +716,7 @@ function buildLOI(){
 
   // Section subtitle pill (large)
   function addSubtitle(text,x,y){
-    const grp=svgEl('g',{class:'ln','data-label':'__lbl__',style:'pointer-events:none'});
+    const grp=svgEl('g',{class:'ln','data-label':'__sub__'+text,style:'pointer-events:none'});
     grp.appendChild(svgEl('rect',{x:x,y:y-SUBTITLE_H/2,width:130,height:SUBTITLE_H,rx:'9',fill:'rgba(255,255,255,.06)',stroke:'rgba(255,255,255,.2)','stroke-width':'0.8'}));
     const t=svgEl('text',{x:x+65,y:y+5,'text-anchor':'middle',fill:'rgba(255,255,255,.85)','font-size':'13','font-family':'DM Sans,sans-serif','font-weight':'500','letter-spacing':'0.06em'});t.textContent=text;
     grp.appendChild(t);g.appendChild(grp);
@@ -557,8 +733,8 @@ function buildLOI(){
     g.appendChild(grp);
   }
   const wsColors={Innovation:'#e8b96a',Insight:'#7ab8e8',Influence:'#a0c88a'};
-  addSubtitle('INITIATIVES', 20, iSubtitleY);
-  addSubtitle('PARTNERS', 20, pSubtitleY);
+  addSubtitle('INITIATIVES', mapLeft+20, iSubtitleY);
+  addSubtitle('PARTNERS', mapLeft+20, pSubtitleY);
 
   function addEdge(f,t,col,dash,df,dt){const a=nodes[f],b=nodes[t];if(!a||!b)return;
     const line=svgEl('line',{x1:df?df.x:a.x,y1:df?df.y:a.y+(a.h||0)/2,x2:dt?dt.x:b.x,y2:dt?dt.y:b.y-(b.h||0)/2,stroke:col,'stroke-width':'1','stroke-dasharray':dash||'4,3',opacity:'0.5','data-from':f,'data-to':t});
@@ -567,7 +743,7 @@ function buildLOI(){
   qLbls.forEach((q,i)=>{if(i<qLbls.length-1){const a=nodes[q],b=nodes[qLbls[i+1]];
     const p=svgEl('path',{d:'M'+(a.x+a.w/2)+','+a.y+' C'+((a.x+a.w/2+b.x-b.w/2)/2)+','+a.y+' '+((a.x+a.w/2+b.x-b.w/2)/2)+','+b.y+' '+(b.x-b.w/2)+','+b.y,stroke:'rgba(255,255,255,0.2)','stroke-width':'1',fill:'none','stroke-dasharray':'4,3','data-from':q,'data-to':qLbls[i+1],'marker-end':'url(#la)'});g.insertBefore(p,g.firstChild);}});
   CONNECTIONS.forEach(c=>{if(c.type==='Level of Leadership'&&nodes[c.from]&&nodes[c.to]){const cat=ELEMENTS[c.from]?.category||'';addEdge(c.from,c.to,CC[cat]||'rgba(255,255,255,.3)','3,3',{x:nodes[c.from].x,y:nodes[c.from].y-(nodes[c.from].h||0)/2},{x:nodes[c.to].x,y:nodes[c.to].y+(nodes[c.to].h||0)/2});}});
-  CONNECTIONS.forEach(c=>{if(c.type==='Partner'&&nodes[c.from]&&nodes[c.to]){addEdge(c.from,c.to,'rgba(255,255,255,0.1)','2,3',{x:nodes[c.from].x+6,y:nodes[c.from].y+6},{x:nodes[c.to].x,y:nodes[c.to].y-(nodes[c.to].h||0)/2});}});
+  CONNECTIONS.forEach(c=>{if(c.type==='Partner'&&nodes[c.from]&&nodes[c.to]){const cat=ELEMENTS[c.to]?.category||'';const col=CC[cat]?CC[cat]+'33':'rgba(255,255,255,0.1)';addEdge(c.from,c.to,col,'2,3',{x:nodes[c.from].x+6,y:nodes[c.from].y+6},{x:nodes[c.to].x,y:nodes[c.to].y-(nodes[c.to].h||0)/2});}});
 
   let loiSel=null;
   function loiClick(label){
@@ -579,13 +755,61 @@ function buildLOI(){
     const sy=rect.top+(n.y+(n.h||0)/2)*loiTF.scale+loiTF.y;
     showTT(label,sx,sy);
     const conn=new Set([label]);
+    // First hop: direct connections
     CONNECTIONS.forEach(c=>{if(nodes[c.from]&&nodes[c.to]&&(c.from===label||c.to===label)){conn.add(c.from);conn.add(c.to);}});
+    // Second hop: if selected is a Partner, also illuminate Levels of Leadership
+    // connected to the partner's initiatives
+    if(ELEMENTS[label]?.type==='Partner'){
+      const initiatives=[...conn].filter(l=>ELEMENTS[l]?.type==='Initiative');
+      initiatives.forEach(init=>{
+        CONNECTIONS.forEach(c=>{
+          if((c.from===init||c.to===init)&&nodes[c.from]&&nodes[c.to]){
+            const other=c.from===init?c.to:c.from;
+            if(ELEMENTS[other]?.type==='Level of Leadership')conn.add(other);
+          }
+        });
+      });
+    }
     g.querySelectorAll('.ln').forEach(n=>n.style.opacity=conn.has(n.dataset.label)?'1':'0.07');
-    g.querySelectorAll('line[data-from],path[data-from]').forEach(l=>{const f=l.getAttribute('data-from'),t=l.getAttribute('data-to');const ok=conn.has(f)&&conn.has(t);l.setAttribute('opacity',ok?'0.9':'0.03');if(l.tagName==='line')l.setAttribute('stroke-width',ok?'1.5':'0.5');});
+    g.querySelectorAll('line[data-from],path[data-from]').forEach(l=>{
+      const f=l.getAttribute('data-from'),t=l.getAttribute('data-to');
+      const ok=conn.has(f)&&conn.has(t);
+      if(ok){
+        l.setAttribute('opacity','0.9');
+        if(l.tagName==='line')l.setAttribute('stroke-width','1.5');
+        // Boost faint partner lines to full category colour
+        const fromType=ELEMENTS[f]?.type||'',toType=ELEMENTS[t]?.type||'';
+        if(fromType==='Partner'||toType==='Partner'){
+          const init=fromType==='Partner'?t:f;
+          const cat=ELEMENTS[init]?.category||'';
+          l.setAttribute('stroke',CC[cat]||'rgba(255,255,255,0.7)');
+        }
+      } else {
+        l.setAttribute('opacity','0.03');
+        if(l.tagName==='line')l.setAttribute('stroke-width','0.5');
+      }
+    });
   }
-  function loiReset(){g.querySelectorAll('.ln').forEach(n=>n.style.opacity='');g.querySelectorAll('line[data-from],path[data-from]').forEach(l=>{l.setAttribute('opacity','0.5');if(l.tagName==='line')l.setAttribute('stroke-width','1');});}
+  loiResetFn=function(){
+    g.querySelectorAll('.ln').forEach(n=>n.style.opacity='');
+    g.querySelectorAll('line[data-from],path[data-from]').forEach(l=>{
+      l.setAttribute('opacity','0.5');
+      if(l.tagName==='line'){
+        l.setAttribute('stroke-width','1');
+        // Restore partner lines to category colour (faint)
+        const f=l.getAttribute('data-from'),t=l.getAttribute('data-to');
+        if(ELEMENTS[f]?.type==='Partner'||ELEMENTS[t]?.type==='Partner'){
+          const init=ELEMENTS[f]?.type==='Partner'?t:f;
+          const cat=ELEMENTS[init]?.category||'';
+          l.setAttribute('stroke',CC[cat]?CC[cat]+'33':'rgba(255,255,255,0.1)');
+        }
+      }
+    });
+  };
   loiClickFn=loiClick;
-  canvas.addEventListener('click',()=>{loiSel=null;loiReset();hideTT();});
+  applyLOIFilterFn=()=>{g.querySelectorAll('.ln').forEach(n=>n.style.opacity='1');};
+  document.getElementById('loi-panel-close').onclick=()=>{loiSel=null;loiReset();hideTT();};
+  canvas.addEventListener('click',e=>{if(!e.target.closest('[data-label]')){loiSel=null;loiReset();hideTT();}});
 
   function drawBox(key,opts){const n=nodes[key];if(!n)return;const el=ELEMENTS[key];if(!el)return;
     const grp=svgEl('g',{class:'ln','data-label':key,style:'cursor:pointer'});
@@ -628,11 +852,59 @@ function buildLOI(){
     grp.addEventListener('click',e=>{e.stopPropagation();loiClick(p);});
     g.appendChild(grp);});
 
-  document.querySelectorAll('#loi-filters .fb').forEach(btn=>{btn.onclick=function(){document.querySelectorAll('#loi-filters .fb').forEach(b=>b.classList.remove('active'));this.classList.add('active');const show=this.dataset.show;g.querySelectorAll('.ln').forEach(n=>{const t=ELEMENTS[n.dataset.label]?.type||'';let v=true;if(show==='Level of Leadership')v=t==='Level of Leadership'||t==='Context';else if(show==='Initiative')v=t==='Initiative'||t==='Level of Leadership'||t==='Context';n.style.opacity=v?'1':'0.08';});};});
+  document.querySelectorAll('#loi-filters .fb').forEach(btn=>{btn.onclick=function(){
+    document.querySelectorAll('#loi-filters .fb').forEach(b=>b.classList.remove('active'));
+    this.classList.add('active');
+    const show=this.dataset.show;
+
+    // Build sets needed for Partner filter
+    let visInits=new Set(), visLOI=new Set(), visWS=new Set();
+    if(show==='Partner'){
+      // Find all initiatives connected to any partner
+      CONNECTIONS.forEach(c=>{
+        if(c.type==='Partner'&&ELEMENTS[c.from]?.type==='Partner'&&ELEMENTS[c.to]?.type==='Initiative'){
+          visInits.add(c.to);
+        }
+      });
+      // Find workstreams that contain those initiatives (via Workstream connection)
+      CONNECTIONS.forEach(c=>{
+        if(c.type==='Workstream'&&visInits.has(c.from)&&ELEMENTS[c.to]?.type==='Workstream'){
+          visWS.add(c.to);
+        }
+      });
+      // Find levels of leadership connected to those initiatives
+      CONNECTIONS.forEach(c=>{
+        if(c.type==='Level of Leadership'&&visInits.has(c.from)&&ELEMENTS[c.to]?.type==='Level of Leadership'){
+          visLOI.add(c.to);
+        }
+      });
+    }
+
+    g.querySelectorAll('.ln').forEach(n=>{
+      const label=n.dataset.label||'';
+      const t=ELEMENTS[label]?.type||'';
+      let v=true;
+      if(show==='Level of Leadership'){
+        v=t==='Level of Leadership'||t==='Context';
+      } else if(show==='Initiative'){
+        v=t==='Initiative'||t==='Workstream'||label==='__sub__INITIATIVES';
+      } else if(show==='Partner'){
+        v=t==='Partner'
+          ||label==='__sub__PARTNERS'
+          ||label==='__sub__INITIATIVES'
+          ||visInits.has(label)
+          ||visWS.has(label)
+          ||visLOI.has(label);
+      }
+      // Always keep top two context elements visible
+      if(label==='The 21st Century leadership challenge'||label==='Our leadership hypothesis') v=true;
+      n.style.opacity=v?'1':'0.08';
+    });
+  };});
   setupPZ(canvas,svg,g,loiTF,()=>applyLTF(g));
   document.getElementById('loi-zi').onclick=()=>{loiTF.scale=Math.min(loiTF.scale*1.2,4);applyLTF(g);};
   document.getElementById('loi-zo').onclick=()=>{loiTF.scale=Math.max(loiTF.scale/1.2,.2);applyLTF(g);};
-  document.getElementById('loi-zf').onclick=()=>{loiTF={x:(W-W*scl)/2,y:20,scale:scl};applyLTF(g);};
+  document.getElementById('loi-zf').onclick=()=>{loiTF={x:tx,y:ty,scale:scl};applyLTF(g);};
 }
 
 // ════════════════════════════════════════
@@ -649,7 +921,8 @@ function buildNet(){
   netBuilt=true;
   svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('width',W);svg.setAttribute('height',H);
 
-  const cx=W*.38,cy=H*.50,pos={};
+  const panelW=280;
+  const cx=(W-panelW)*.42,cy=H*.50,pos={};
   pos['FUTURE-FIT LEADERSHIP']={x:cx,y:cy};
   const cohortAng={'Citizens':30,'Young people':120,'Teachers':210,'Indigenous women':300};
   Object.entries(cohortAng).forEach(([k,deg])=>{const a=deg*Math.PI/180;pos[k]={x:cx+92*Math.sin(a),y:cy-92*Math.cos(a)};});
@@ -733,13 +1006,14 @@ function buildNet(){
     edgeG.querySelectorAll('path').forEach(l=>{const ok=conn.has(l.getAttribute('data-from'))&&conn.has(l.getAttribute('data-to'));l.setAttribute('opacity',ok?'0.95':'0.03');l.setAttribute('stroke-width',ok?(parseFloat(l._sw||2)*1.3).toFixed(1):'0.5');});
     nodeG.querySelectorAll('g').forEach(n=>n.style.opacity=conn.has(n.dataset.label)?'1':'0.07');
   }
-  function netReset(){
+  netResetFn=function(){
     edgeG.querySelectorAll('path').forEach(l=>{l.setAttribute('stroke-width',l._sw||'2');});
     nodeG.querySelectorAll('g').forEach(n=>n.style.opacity='');
     applyFilters();
-  }
+  };
   netClickFn=netClick;
-  svg.addEventListener('click',()=>{netSel=null;netReset();hideTT();});
+  document.getElementById('net-panel-close').onclick=()=>{netSel=null;netReset();hideTT();};
+  svg.addEventListener('click',e=>{if(!e.target.closest('[data-label]')){netSel=null;netReset();hideTT();}});
 
   // Get partner label colour from its first connected initiative's category
   function partnerColor(label){
@@ -922,12 +1196,29 @@ function buildNet(){
     return visible;
   }
 
+  // Build adjacency once for category-connectivity checks
+  const _catAdj={};
+  CONNECTIONS.forEach(c=>{
+    _catAdj[c.from]=_catAdj[c.from]||[];
+    _catAdj[c.to]  =_catAdj[c.to]  ||[];
+    _catAdj[c.from].push(c.to);
+    _catAdj[c.to  ].push(c.from);
+  });
+
   function nodeVisible(label, yearSet){
     const el=ELEMENTS[label];if(!el)return false;
     const t=el.type,c=el.category||'';
     if(t==='Context'||t==='Workstream')return true;
     if(netActiveType!=='all'&&t!==netActiveType)return false;
-    if(netActiveCat!=='all'&&c!==netActiveCat)return false;
+    if(netActiveCat!=='all'){
+      // Partners and Outputs inherit visibility from connected initiatives
+      if(t==='Partner'||t==='Output'){
+        const connectedMatch=(_catAdj[label]||[]).some(nb=>(ELEMENTS[nb]?.category||'')=== netActiveCat);
+        if(!connectedMatch)return false;
+      } else {
+        if(c!==netActiveCat)return false;
+      }
+    }
     if(yearSet!==null&&!yearSet.has(label))return false;
     return true;
   }
@@ -955,6 +1246,7 @@ function buildNet(){
       }
     });
   }
+  applyFiltersFn=applyFilters;
   document.querySelectorAll('#slide5 .fbg .fb[data-type]').forEach(btn=>{btn.onclick=function(){document.querySelectorAll('#slide5 .fbg .fb[data-type]').forEach(b=>b.classList.remove('active'));this.classList.add('active');netActiveType=this.dataset.type;applyFilters();};});
   document.querySelectorAll('#cat-filters .cfb').forEach(btn=>{btn.onclick=function(){document.querySelectorAll('#cat-filters .cfb').forEach(b=>b.classList.remove('active'));this.classList.add('active');netActiveCat=this.dataset.cat;applyFilters();};});
   document.querySelectorAll('#year-filters .fb').forEach(btn=>{btn.onclick=function(){document.querySelectorAll('#year-filters .fb').forEach(b=>b.classList.remove('active'));this.classList.add('active');netActiveYear=this.dataset.year;applyFilters();};});
@@ -964,6 +1256,122 @@ function buildNet(){
   document.getElementById('net-zo').onclick=()=>{netTF.scale=Math.max(netTF.scale/1.25,.15);applyNTF(g);};
   document.getElementById('net-zf').onclick=()=>{netTF={x:tx,y:ty,scale:sc};applyNTF(g);};
 }
+  // ── GUIDED TOUR ──────────────────────────────────────────────────────────
+  const TOUR_STEPS = [
+    {
+      slide: 2, // slide 4 (0-indexed)
+      anchor: 'loi-zi', // zoom in button
+      side: 'left',
+      title: 'Zoom in & out',
+      body: 'Use the + and − buttons at the top right to zoom in and out of each map. Use ⊡ to reset to the default view.'
+    },
+    {
+      slide: 2,
+      anchor: 'loi-filters', // filter buttons
+      side: 'bottom',
+      title: 'Filter elements',
+      body: 'Use the filter buttons at the top to show only Lines of Inquiry, Initiatives or Partners.'
+    },
+    {
+      slide: 2,
+      anchor: null, // centre of canvas
+      side: 'centre',
+      title: 'Click any element',
+      body: 'Click any element on the map to see its description and highlight its direct connections. Click the background to reset.'
+    },
+    {
+      slide: 2,
+      anchor: 'btn-next',
+      side: 'top',
+      title: 'Navigate slides',
+      body: 'Use the Back and Next buttons to move between slides. The dots show which slide you are on.'
+    }
+  ];
+
+  let tourStep = -1;
+  const tourEl  = document.getElementById('tour');
+  const tourStepEl  = document.getElementById('tour-step');
+  const tourTitleEl = document.getElementById('tour-title');
+  const tourBodyEl  = document.getElementById('tour-body');
+  const tourArrow   = document.getElementById('tour-arrow');
+
+  function showTourStep(i) {
+    if (i >= TOUR_STEPS.length) { endTour(); return; }
+    tourStep = i;
+    const step = TOUR_STEPS[i];
+    tourStepEl.textContent  = `Guide ${i+1} of ${TOUR_STEPS.length}`;
+    tourTitleEl.textContent = step.title;
+    tourBodyEl.textContent  = step.body;
+    document.getElementById('tour-next').textContent = i < TOUR_STEPS.length - 1 ? 'Next →' : 'Done ✓';
+    tourEl.classList.add('vis');
+    positionTour(step);
+  }
+
+  function positionTour(step) {
+    tourArrow.style.display = 'none';
+    const tw = tourEl.offsetWidth || 280;
+    const th = tourEl.offsetHeight || 160;
+    const margin = 12;
+
+    if (step.side === 'centre') {
+      tourEl.style.left = (window.innerWidth/2 - tw/2) + 'px';
+      tourEl.style.top  = (window.innerHeight/2 - th/2) + 'px';
+      return;
+    }
+    const anchor = document.getElementById(step.anchor);
+    if (!anchor) { tourEl.style.left='50%'; tourEl.style.top='50%'; return; }
+    const r = anchor.getBoundingClientRect();
+
+    if (step.side === 'left') {
+      tourEl.style.left = (r.left - tw - margin) + 'px';
+      tourEl.style.top  = Math.max(8, r.top + r.height/2 - th/2) + 'px';
+      tourArrow.style.display = 'block';
+      tourArrow.style.right = '-6px'; tourArrow.style.top = '50%';
+      tourArrow.style.left  = 'auto'; tourArrow.style.bottom = 'auto';
+      tourArrow.style.transform = 'translateY(-50%) rotate(45deg)';
+      tourArrow.style.borderLeft = 'none'; tourArrow.style.borderBottom = 'none';
+    } else if (step.side === 'bottom') {
+      tourEl.style.left = Math.max(8, r.left + r.width/2 - tw/2) + 'px';
+      tourEl.style.top  = (r.bottom + margin) + 'px';
+      tourArrow.style.display = 'block';
+      tourArrow.style.top = '-6px'; tourArrow.style.left = '50%';
+      tourArrow.style.right = 'auto'; tourArrow.style.bottom = 'auto';
+      tourArrow.style.transform = 'translateX(-50%) rotate(45deg)';
+      tourArrow.style.borderRight = 'none'; tourArrow.style.borderBottom = 'none';
+    } else if (step.side === 'top') {
+      tourEl.style.left = Math.max(8, r.left + r.width/2 - tw/2) + 'px';
+      tourEl.style.top  = (r.top - th - margin) + 'px';
+      tourArrow.style.display = 'block';
+      tourArrow.style.bottom = '-6px'; tourArrow.style.left = '50%';
+      tourArrow.style.top = 'auto'; tourArrow.style.right = 'auto';
+      tourArrow.style.transform = 'translateX(-50%) rotate(45deg)';
+      tourArrow.style.borderTop = 'none'; tourArrow.style.borderLeft = 'none';
+    }
+    // Clamp to viewport
+    const l = parseFloat(tourEl.style.left);
+    const t = parseFloat(tourEl.style.top);
+    tourEl.style.left = Math.max(8, Math.min(l, window.innerWidth - tw - 8)) + 'px';
+    tourEl.style.top  = Math.max(8, Math.min(t, window.innerHeight - th - 8)) + 'px';
+  }
+
+  function endTour() {
+    tourEl.classList.remove('vis');
+    tourStep = -1;
+  }
+
+  document.getElementById('tour-next').onclick = () => showTourStep(tourStep + 1);
+  document.getElementById('tour-skip').onclick = endTour;
+
+  // Start tour when user first arrives on slide 4 (once per session)
+  let tourShown = false;
+  const _origGoTo = goTo;
+  goTo = function(idx) {
+    _origGoTo(idx);
+    if (idx === 2 && !tourShown) {
+      tourShown = true;
+      setTimeout(() => showTourStep(0), 700);
+    }
+  };
 } // end init()
 init();
 </script>
