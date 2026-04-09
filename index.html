@@ -826,7 +826,9 @@ function buildLOI(){
   allPartners.forEach(p=>{const n=nodes[p];if(!n)return;
     const grp=svgEl('g',{class:'ln','data-label':p,style:'cursor:pointer'});
     const connInit=CONNECTIONS.find(c=>c.type==='Partner'&&c.from===p&&nodes[c.to]);
-    const accentCol=CC[ELEMENTS[connInit?.to]?.category||'']||'rgba(255,255,255,.2)';
+    const accentCols=connInit
+      ? [...new Set(CONNECTIONS.filter(c=>c.type==='Partner'&&c.from===p&&nodes[c.to]).map(c=>CC[ELEMENTS[c.to]?.category||'']||'rgba(255,255,255,.2)'))]
+      : ['rgba(255,255,255,.2)'];
     const chipH=20,padL=9,padR=7;
     const tMeasure=svgEl('text',{x:'0',y:'0',fill:'none','font-size':'9','font-family':'DM Sans,sans-serif'});tMeasure.textContent=p;
     g.appendChild(tMeasure);const tw=tMeasure.getComputedTextLength()||p.length*5.2;g.removeChild(tMeasure);
@@ -834,9 +836,10 @@ function buildLOI(){
     const x0=n.x;
     grp.appendChild(svgEl('rect',{x:x0,y:n.y-chipH/2,width:chipW,height:chipH,rx:'3',fill:'transparent'}));
     const bg=svgEl('rect',{x:x0,y:n.y-chipH/2,width:chipW,height:chipH,rx:'3',fill:'rgba(255,255,255,.06)',stroke:'rgba(255,255,255,.18)','stroke-width':'0.8'});
-    const bar=svgEl('rect',{x:x0,y:n.y-chipH/2,width:3,height:chipH,rx:'3',fill:accentCol,opacity:'0.7'});
     const t=svgEl('text',{x:x0+padL,y:n.y+4,fill:'rgba(255,255,255,.75)','font-size':'9','font-family':'DM Sans,sans-serif',style:'pointer-events:none'});t.textContent=p;
-    grp.appendChild(bg);grp.appendChild(bar);grp.appendChild(t);
+    grp.appendChild(bg);
+    drawAccentBar(grp,x0,n.y-chipH/2,chipH,accentCols);
+    grp.appendChild(t);
     grp.addEventListener('mouseenter',e=>{bg.setAttribute('fill','rgba(255,255,255,.12)');bg.setAttribute('stroke','rgba(255,255,255,.4)');t.setAttribute('fill','rgba(255,255,255,.95)');startHoverTT(p,e);});
     grp.addEventListener('mouseleave',()=>{bg.setAttribute('fill','rgba(255,255,255,.06)');bg.setAttribute('stroke','rgba(255,255,255,.18)');t.setAttribute('fill','rgba(255,255,255,.75)');clearHoverTT();});
     grp.addEventListener('click',e=>{e.stopPropagation();loiClick(p);});
@@ -897,8 +900,32 @@ function buildLOI(){
   document.getElementById('loi-zf').onclick=()=>{loiTF={x:tx,y:ty,scale:scl};applyLTF(g);};
 }
 
+// ── Shared partner helpers (used by both buildLOI and buildNet) ──────────
+function partnerColors(label){
+  const cats=[...new Set(
+    CONNECTIONS
+      .filter(c=>c.type==='Partner'&&c.from===label&&ELEMENTS[c.to])
+      .map(c=>ELEMENTS[c.to]?.category||'')
+      .filter(Boolean)
+  )];
+  return cats.length ? cats.map(c=>CC[c]||'rgba(255,255,255,.2)') : ['rgba(255,255,255,.2)'];
+}
+function drawAccentBar(svgGroup,x0,y0,chipH,colors){
+  const n=colors.length;
+  const segH=chipH/n;
+  colors.forEach((col,i)=>{
+    const sy=y0+i*segH;
+    const seg=svgEl('rect',{
+      x:x0, y:sy,
+      width:3, height:segH+(i<n-1?0.5:0),
+      rx: i===0||i===n-1 ? '2' : '0',
+      fill:col, opacity:'0.85'
+    });
+    svgGroup.appendChild(seg);
+  });
+}
+
 // ════════════════════════════════════════
-// SLIDE 5: NET MAP
 // ════════════════════════════════════════
 let netBuilt=false;let netTF={x:0,y:0,scale:1};
 let netActiveType='all',netActiveCat='all',netActiveYear='all';
@@ -914,29 +941,155 @@ function buildNet(){
   const panelW=280;
   const cx=(W-panelW)*.42,cy=H*.50,pos={};
   pos['FUTURE-FIT LEADERSHIP']={x:cx,y:cy};
-  const cohortAng={'Citizens':30,'Young people':120,'Teachers':210,'Indigenous women':300};
+  const cohortAng={'Citizens':40,'Young people':130,'Teachers':220,'Indigenous women':310};
   Object.entries(cohortAng).forEach(([k,deg])=>{const a=deg*Math.PI/180;pos[k]={x:cx+92*Math.sin(a),y:cy-92*Math.cos(a)};});
-  const lR=184;function lp(deg){const a=deg*Math.PI/180;return{x:cx+lR*Math.sin(a),y:cy-lR*Math.cos(a)};}
-  pos['Media']=lp(350);pos['Culture']=lp(8);pos['Capability']=lp(26);pos['Capital']=lp(44);pos['Governance']=lp(62);
-  pos['International exchange']=lp(108);pos['Curriculum']=lp(165);pos['Evidence']=lp(188);pos['Teacher training']=lp(228);pos['Entrepreneurship']=lp(300);
+  const lR=184;
+  // Helper: place lever at angle, but push away from 270° (left) if within gap zone
+  function lp(deg){
+    const gap=30; // half-gap in degrees either side of 270°
+    const d=((deg-270)+360)%360; // distance from 270
+    const mirror=d>180?360-d:d;  // symmetric distance
+    if(mirror<gap){
+      const push=(deg<270||(deg>340||deg<90))?-gap*1.2:gap*1.2;
+      deg=((deg+push)+360)%360;
+    }
+    const a=deg*Math.PI/180;return{x:cx+lR*Math.sin(a),y:cy-lR*Math.cos(a)};
+  }
+  pos['Media']=lp(360);pos['Culture']=lp(18);pos['Capability']=lp(36);pos['Capital']=lp(54);pos['Governance']=lp(72);
+  pos['International exchange']=lp(118);pos['Curriculum']=lp(175);pos['Evidence']=lp(238);pos['Teacher training']=lp(198);pos['Entrepreneurship']=lp(310);
   pos['Innovation']={x:cx-320,y:cy-180};pos['Insight']={x:cx-300,y:cy-120};pos['Influence']={x:cx-280,y:cy-55};
   pos['Cohorts and levers']={x:cx-180,y:cy};pos['Initiatives and outputs']={x:cx-280,y:cy};
 
-  function placeCircle(keys,rad){
+  function placeCircle(keys,rad,gapDeg,gapWidth){
+    // gapDeg: centre of exclusion zone (degrees), gapWidth: total arc to skip
     const sorted=[...keys].sort((a,b)=>(ELEMENTS[a]?.size||0)-(ELEMENTS[b]?.size||0));
-    const step=360/sorted.length,angs={};
-    sorted.forEach((k,i)=>{const deg=30+i*step,a=deg*Math.PI/180;pos[k]={x:cx+rad*Math.sin(a),y:cy-rad*Math.cos(a)};angs[k]=deg;});
+    const n=sorted.length,angs={};
+    if(!gapDeg&&gapDeg!==0){
+      // No gap: evenly spaced
+      const step=360/n;
+      sorted.forEach((k,i)=>{const deg=30+i*step,a=deg*Math.PI/180;pos[k]={x:cx+rad*Math.sin(a),y:cy-rad*Math.cos(a)};angs[k]=deg;});
+    } else {
+      // Distribute n items around 360° with a gap arc excluded around gapDeg
+      const gap=gapWidth||40; // degrees to leave empty
+      const available=360-gap;
+      const step=available/(n);
+      // Start placing just after the gap
+      const startDeg=((gapDeg+gap/2)+40)%360;
+      sorted.forEach((k,i)=>{
+        const deg=(startDeg+i*step)%360;
+        const a=deg*Math.PI/180;
+        pos[k]={x:cx+rad*Math.sin(a),y:cy-rad*Math.cos(a)};
+        angs[k]=deg;
+      });
+    }
     return angs;
   }
   const initKeys=Object.keys(ELEMENTS).filter(k=>ELEMENTS[k].type==='Initiative');
-  const initAngs=placeCircle(initKeys,276);
+  const initAngs=placeCircle(initKeys,276,270,36); // gap at 270° (left) for 'Initiatives & outputs' label
+
+  // ── Adaptive initiative positioning ────────────────────────────────────
+  // Preferred angles from visual inspection. Applied only if they don't
+  // cause overlap with auto-placed initiatives. When new data is added,
+  // the system detects conflicts and spreads elements to avoid them.
+  const initPreferred={'Menzies Oration':322,'Australasian leadership initiative':303,
+    'Indigenous women entreneurship initiative':289,'Menzies School Leadership Incubator':183,
+    'Complexity Leadership Lab':222,'Australian Leadership Index':203};
+
+  const minInitSep=18; // minimum degrees between any two initiatives
+  const initR=276;
+
+  // Step 1: apply preferred angles for known initiatives (if they exist in data)
+  Object.entries(initPreferred).forEach(([k,deg])=>{
+    if(initAngs[k]!=null){initAngs[k]=deg;}
+  });
+
+  // Step 2: detect and resolve conflicts — iteratively push overlapping
+  // initiatives apart, preserving preferred positions where possible
+  function resolveOverlaps(angs, preferred, minSep, maxIter=80){
+    const keys=Object.keys(angs);
+    for(let iter=0;iter<maxIter;iter++){
+      let moved=false;
+      // Sort by angle for neighbour comparison
+      const sorted=keys.slice().sort((a,b)=>angs[a]-angs[b]);
+      for(let i=0;i<sorted.length;i++){
+        const a=sorted[i], b=sorted[(i+1)%sorted.length];
+        const gap=((angs[b]-angs[a])+360)%360;
+        const fullGap=((angs[sorted[0]]-angs[sorted[sorted.length-1]])+360)%360;
+        if(gap<minSep&&gap!==0){
+          const push=(minSep-gap)/2;
+          // Don't move preferred items unless necessary — move the non-preferred one more
+          const aPreferred=preferred[a]!=null, bPreferred=preferred[b]!=null;
+          const aShare=aPreferred&&!bPreferred?0.1:bPreferred&&!aPreferred?0.9:0.5;
+          angs[a]=((angs[a]-push*aShare)+360)%360;
+          angs[b]=(angs[b]+push*(1-aShare)+360)%360;
+          moved=true;
+        }
+      }
+      if(!moved)break;
+    }
+    return angs;
+  }
+
+  resolveOverlaps(initAngs, initPreferred, minInitSep);
+
+  // Step 4: ensure no initiative lands in the 270° gap zone after resolution
+  const gapCentre=270, gapHalfInit=18;
+  Object.keys(initAngs).forEach(k=>{
+    let deg=initAngs[k];
+    const dist=Math.min((deg-gapCentre+360)%360,(gapCentre-deg+360)%360);
+    if(dist<gapHalfInit){
+      // Push to nearest clear side
+      const toRight=(gapCentre+gapHalfInit+2+360)%360;
+      const toLeft=(gapCentre-gapHalfInit-2+360)%360;
+      const dRight=Math.min((toRight-deg+360)%360,(deg-toRight+360)%360);
+      const dLeft=Math.min((toLeft-deg+360)%360,(deg-toLeft+360)%360);
+      initAngs[k]=dRight<dLeft?toRight:toLeft;
+    }
+  });
+  Object.keys(initAngs).forEach(k=>{
+    const a=initAngs[k]*Math.PI/180;
+    pos[k]={x:cx+initR*Math.sin(a),y:cy-initR*Math.cos(a)};
+  });
   const outKeys=Object.keys(ELEMENTS).filter(k=>ELEMENTS[k].type==='Output');
-  const outStep=360/outKeys.length;
   function idealAng(ok){const c=CONNECTIONS.find(x=>x.type==='Output'&&x.from===ok);return(c&&initAngs[c.to]!=null)?initAngs[c.to]:180;}
-  const sortedOuts=[...outKeys].sort((a,b)=>{const d=idealAng(a)-idealAng(b);if(Math.abs(d)>.1)return d;return(ELEMENTS[a]?.size||0)-(ELEMENTS[b]?.size||0);});
-  let bestOff=30,bestCost=Infinity;
-  for(let t=0;t<sortedOuts.length;t++){const off=30+t*outStep;let cost=0;sortedOuts.forEach((k,i)=>{let d=((off+i*outStep-idealAng(k))+360)%360;if(d>180)d=360-d;cost+=d;});if(cost<bestCost){bestCost=cost;bestOff=30+t*outStep;}}
-  sortedOuts.forEach((k,i)=>{const deg=bestOff+i*outStep,a=deg*Math.PI/180;pos[k]={x:cx+368*Math.sin(a),y:cy-368*Math.cos(a)};});
+
+
+  // ── Adaptive output placement ─────────────────────────────────────────
+  // Cluster outputs around their parent initiative, then resolve overlaps.
+  // Uses same resolveOverlaps() as initiatives — no preferred positions,
+  // all outputs treated equally, min separation ~7° (~45px at r=368).
+  const outByParent={};
+  outKeys.forEach(ok=>{
+    const ang=idealAng(ok).toFixed(1);
+    if(!outByParent[ang])outByParent[ang]=[];
+    outByParent[ang].push(ok);
+  });
+  const outGapCentre=270,outGapHalf=28;
+  const minOutSep=7; // degrees minimum between adjacent outputs
+  const spreadStep=minOutSep;
+  const outAngs={};
+  // Initial placement: centre each group on parent angle
+  outKeys.forEach(ok=>{
+    const parentAng=idealAng(ok);
+    const siblings=outByParent[parentAng.toFixed(1)];
+    const idx=siblings.indexOf(ok);
+    const n=siblings.length;
+    const offset=(idx-(n-1)/2)*spreadStep;
+    outAngs[ok]=(parentAng+offset+360)%360;
+  });
+  // Resolve overlaps across ALL outputs (not just within groups)
+  resolveOverlaps(outAngs,{},minOutSep);
+  // Apply gap zone push
+  Object.keys(outAngs).forEach(k=>{
+    let deg=outAngs[k];
+    const dist=Math.min((deg-outGapCentre+360)%360,(outGapCentre-deg+360)%360);
+    if(dist<outGapHalf){
+      deg=deg<outGapCentre?(outGapCentre-outGapHalf-2+360)%360:(outGapCentre+outGapHalf+2)%360;
+      outAngs[k]=deg;
+    }
+    const a=deg*Math.PI/180;
+    pos[k]={x:cx+368*Math.sin(a),y:cy-368*Math.cos(a)};
+  });
 
   // Partners in right column — beyond output ring
   const partKeys=Object.keys(ELEMENTS).filter(k=>ELEMENTS[k].type==='Partner');
@@ -966,18 +1119,41 @@ function buildNet(){
   CONNECTIONS.forEach(c=>{
     const fe=ELEMENTS[c.from],te=ELEMENTS[c.to];if(!fe||!te)return;
     if(fe.type==='Workstream'||te.type==='Workstream')return;
-    const cat=fe.category||te.category||'';const col=(CC[cat]||'#8898aa')+'88';
+    const cat=fe.category||te.category||'';
+    // Partner lines: faint category tint at rest (matching slide 3 style)
+    const col=c.type==='Partner'
+      ? (CC[cat]?CC[cat]+'44':'rgba(255,255,255,0.12)')
+      : (CC[cat]||'#8898aa')+'88';
     const dash=c.type==='Partner'?'4,4':c.type==='Output'?'5,4':'none';
     const sz=c.size||1;
-    const sw=(0.3+sz*3).toFixed(1);
+    // Partner lines match slide 3 weight (sw=1); other connections use size-based width
+    const sw=c.type==='Partner'?'1':(0.3+sz*3).toFixed(1);
     const af=pos[c.from],at=pos[c.to];if(!af||!at)return;
+
+    // Compute edge point: move from element centre towards the other element
+    // by the element's bounding radius, so lines connect at the nearest surface.
+    function edgePt(p, el, towards){
+      const dx=towards.x-p.x, dy=towards.y-p.y;
+      const dist=Math.sqrt(dx*dx+dy*dy)||1;
+      const ux=dx/dist, uy=dy/dist;
+      let r=0;
+      if(!el) return p;
+      if(el.type==='Cohort') r=36+(el.size-8)*8;
+      else if(el.type==='Lever') r=18;
+      else if(el.type==='Initiative') r=14; // half of 28px square (approx)
+      else if(el.type==='Output') r=10;
+      else if(el.type==='Context') r=70;
+      return {x:p.x+ux*r, y:p.y+uy*r};
+    }
+    const ef=edgePt(af,fe,at);
+    const et=edgePt(at,te,af);
+
     // Quadratic bezier: control point pulled towards map centre (cx,cy)
-    // gives gentle inward curves that echo the circular ring layout
-    const mx=(af.x+at.x)/2, my=(af.y+at.y)/2;
-    const pull=0.35; // how strongly the curve bends toward centre
+    const mx=(ef.x+et.x)/2, my=(ef.y+et.y)/2;
+    const pull=0.10;
     const qx=mx+pull*(cx-mx), qy=my+pull*(cy-my);
     const path=svgEl('path',{
-      d:`M${af.x},${af.y} Q${qx},${qy} ${at.x},${at.y}`,
+      d:`M${ef.x},${ef.y} Q${qx},${qy} ${et.x},${et.y}`,
       stroke:col,'stroke-width':sw,'stroke-dasharray':dash,
       fill:'none',opacity:'0.4','data-from':c.from,'data-to':c.to
     });
@@ -993,11 +1169,40 @@ function buildNet(){
     else showTT(label,window.innerWidth*.5,window.innerHeight*.4);
     const conn=new Set([label]);
     CONNECTIONS.forEach(c=>{if(c.from===label||c.to===label){conn.add(c.from);conn.add(c.to);}});
-    edgeG.querySelectorAll('path').forEach(l=>{const ok=conn.has(l.getAttribute('data-from'))&&conn.has(l.getAttribute('data-to'));l.setAttribute('opacity',ok?'0.95':'0.03');l.setAttribute('stroke-width',ok?(parseFloat(l._sw||2)*1.3).toFixed(1):'0.5');});
+    edgeG.querySelectorAll('path').forEach(l=>{
+      const f=l.getAttribute('data-from'),t=l.getAttribute('data-to');
+      const ok=conn.has(f)&&conn.has(t);
+      const isPartner=(ELEMENTS[f]?.type==='Partner'||ELEMENTS[t]?.type==='Partner');
+      if(ok){
+        l.setAttribute('opacity','0.95');
+        // Partner lines: boost to 2.5 + restore category colour (matching slide 3 behaviour)
+        if(isPartner){
+          l.setAttribute('stroke-width','2.5');
+          const init=ELEMENTS[f]?.type==='Partner'?t:f;
+          const cat=ELEMENTS[init]?.category||'';
+          l.setAttribute('stroke',CC[cat]||'rgba(255,255,255,0.7)');
+        } else {
+          l.setAttribute('stroke-width',(parseFloat(l._sw||2)*1.3).toFixed(1));
+        }
+      } else {
+        l.setAttribute('opacity','0.03');
+        l.setAttribute('stroke-width','0.5');
+      }
+    });
     nodeG.querySelectorAll('g').forEach(n=>n.style.opacity=conn.has(n.dataset.label)?'1':'0.07');
   }
   netResetFn=function(){
-    edgeG.querySelectorAll('path').forEach(l=>{l.setAttribute('stroke-width',l._sw||'2');});
+    edgeG.querySelectorAll('path').forEach(l=>{
+      l.setAttribute('stroke-width',l._sw||'2');
+      // Restore partner line stroke colour to category-tinted faint version
+      const f=l.getAttribute('data-from'),t=l.getAttribute('data-to');
+      if(ELEMENTS[f]?.type==='Partner'||ELEMENTS[t]?.type==='Partner'){
+        const init=ELEMENTS[f]?.type==='Partner'?t:f;
+        const cat=ELEMENTS[init]?.category||'';
+        const col=CC[cat]?CC[cat]+'44':'rgba(255,255,255,0.12)';
+        l.setAttribute('stroke',col);
+      }
+    });
     nodeG.querySelectorAll('g').forEach(n=>n.style.opacity='');
     applyFilters();
   };
@@ -1006,11 +1211,7 @@ function buildNet(){
   svg.addEventListener('click',e=>{if(!e.target.closest('[data-label]')){netSel=null;netReset();hideTT();}});
 
   // Get partner label colour from its first connected initiative's category
-  function partnerColor(label){
-    const conn=CONNECTIONS.find(c=>c.type==='Partner'&&c.from===label&&ELEMENTS[c.to]);
-    if(!conn)return'rgba(255,255,255,.2)';
-    return CC[ELEMENTS[conn.to]?.category||'']||'rgba(255,255,255,.2)';
-  }
+  function partnerColor(label){return partnerColors(label)[0];}
 
   function drawNode(key){
     const p=pos[key];if(!p)return;const el=ELEMENTS[key];if(!el)return;
@@ -1072,7 +1273,7 @@ function buildNet(){
       grp.appendChild(svgEl('polygon',{points:p.x+','+(p.y-s)+' '+(p.x-s*.87)+','+(p.y+s*.5)+' '+(p.x+s*.87)+','+(p.y+s*.5),fill:col+'bb',stroke:col,'stroke-width':'1'}));
       const t=svgEl('text',{x:p.x,y:p.y+s+10,'text-anchor':'middle',fill:'rgba(255,255,255,.6)','font-size':'7.5','font-family':'DM Sans,sans-serif',style:'pointer-events:none'});t.textContent=key.length>20?key.slice(0,19)+'…':key;grp.appendChild(t);
     } else if(el.type==='Partner'){
-      const accentCol=partnerColor(key);
+      const accentCols=partnerColors(key);
       const padL=9,padR=7,maxChipW=160,lineH=11,fontSize='9';
       // Measure full text
       const tMeasure=svgEl('text',{'font-size':fontSize,'font-family':'DM Sans,sans-serif'});
@@ -1102,8 +1303,8 @@ function buildNet(){
       const x0=p.x;
       grp.appendChild(svgEl('rect',{x:x0,y:p.y-chipH/2,width:chipW,height:chipH,rx:'3',fill:'transparent'}));
       const bg=svgEl('rect',{x:x0,y:p.y-chipH/2,width:chipW,height:chipH,rx:'3',fill:'rgba(255,255,255,.06)',stroke:'rgba(255,255,255,.18)','stroke-width':'0.8'});
-      const bar=svgEl('rect',{x:x0,y:p.y-chipH/2,width:3,height:chipH,rx:'3',fill:accentCol,opacity:'0.7'});
-      grp.appendChild(bg);grp.appendChild(bar);
+      grp.appendChild(bg);
+      drawAccentBar(grp,x0,p.y-chipH/2,chipH,accentCols);
       const totalTH=lines.length*lineH;
       lines.forEach((l,li)=>{
         const t=svgEl('text',{x:x0+padL,y:p.y-totalTH/2+li*lineH+lineH*0.85,fill:'rgba(255,255,255,.75)','font-size':fontSize,'font-family':'DM Sans,sans-serif',style:'pointer-events:none'});
