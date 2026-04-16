@@ -1,8 +1,8 @@
 import json
 
 # Google Sheets CSV URLs (published to web)
-ELEMENTS_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJBJjfHVzeooUl9Z2fMJI6e9h_NvOme7GN4k59X0BAkQ0eikwHXokOeCLJX8nS3Q/pub?gid=1554973704&single=true&output=csv'
-CONNECTIONS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJBJjfHVzeooUl9Z2fMJI6e9h_NvOme7GN4k59X0BAkQ0eikwHXokOeCLJX8nS3Q/pub?gid=740560254&single=true&output=csv'
+ELEMENTS_URL    = '%%CONFIG.CSV_ELEMENTS%%'  # set in CONFIG block in JS
+CONNECTIONS_URL = '%%CONFIG.CSV_CONNECTIONS%%'  # set in CONFIG block in JS
 
 # Embed fallback JSON so the file works offline too
 with open('/home/claude/elements_final.json') as f: EL = json.load(f)
@@ -164,7 +164,7 @@ html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM San
      </div>
      <div id="loi-hypothesis" style="position:absolute;top:16px;left:18px;width:280px;background:rgba(247,243,237,0.97);border:1px solid rgba(200,150,62,.3);border-radius:6px;padding:16px 18px;box-shadow:0 4px 20px rgba(0,0,0,.25);z-index:5;pointer-events:none;">
       <div class="mp-type">Context</div>
-      <div class="mp-title">Our leadership hypothesis</div>
+      <div class="mp-title">Introduction</div>
       <div class="mp-body">Consolidating and further enhancing human progress requires a diagnosis of the underlying leadership challenge for the 21st Century, a hypothesis what is needed to address it, and a collective effort in response.</div>
      </div>
     <div class="lgd">
@@ -284,9 +284,87 @@ html,body{height:100%;overflow:hidden;background:var(--navy);font-family:'DM San
 </div>
 <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
 <script>
-// ── Google Sheets live data feed ──────────────────────────────────────────
-const ELEMENTS_URL    = 'ELEMENTS_URL_PLACEHOLDER';
-const CONNECTIONS_URL = 'CONNECTIONS_URL_PLACEHOLDER';
+// ══════════════════════════════════════════════════════════════════════════
+// CONFIGURATION — edit this block to customise the presentation
+// ══════════════════════════════════════════════════════════════════════════
+const CONFIG = {
+
+  // ── Data sources ────────────────────────────────────────────────────────
+  // Google Sheets CSV export URLs (published to web, read-only)
+  CSV_ELEMENTS:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJBJjfHVzeooUl9Z2fMJI6e9h_NvOme7GN4k59X0BAkQ0eikwHXokOeCLJX8nS3Q/pub?gid=1554973704&single=true&output=csv',
+  CSV_CONNECTIONS: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJBJjfHVzeooUl9Z2fMJI6e9h_NvOme7GN4k59X0BAkQ0eikwHXokOeCLJX8nS3Q/pub?gid=740560254&single=true&output=csv',
+
+  // ── Category colours ────────────────────────────────────────────────────
+  COLOURS: {
+    'Community resilience':          '#3b9ede',
+    'Indigenous self-determination': '#e8b84a',
+    'Education outcomes':            '#5cb85c',
+    'Youth development':             '#e87c3e',
+    'Insight and influence':         '#d9534f',
+    '':                              '#8898aa',
+  },
+
+  // ── Network map ring radii (px at 1:1 scale) ────────────────────────────
+  R_COHORT:     92,
+  R_LEVER:     184,
+  R_INITIATIVE:276,
+  R_OUTPUT:    368,
+
+  // ── Gap zone: angle (°) and half-width where section labels sit ─────────
+  GAP_CENTRE:     270,
+  GAP_HALF_INIT:   18,  // initiatives
+  GAP_HALF_OUT:    28,  // outputs
+
+  // ── Minimum angular separation between elements (degrees) ───────────────
+  MIN_INIT_SEP:  18,
+  MIN_OUT_SEP:    7,
+  MIN_LEVER_GAP: 22,
+
+  // ── Connection line curvature (0 = straight, 1 = strongly curved) ───────
+  LINE_PULL: 0.10,
+
+  // ── Manual angle maps — update when adding new cohorts or levers ────────
+  // Angles in degrees clockwise from top (0° = top, 90° = right, etc.)
+  // New elements not listed here are placed automatically in the largest gap.
+  COHORT_ANGLES: {
+    'Citizens':          40,
+    'Young people':     130,
+    'Teachers':         220,
+    'Indigenous women': 310,
+  },
+  LEVER_ANGLES: {
+    'Media':                   360,
+    'Culture':                  18,
+    'Capability':               36,
+    'Capital':                  54,
+    'Governance':               72,
+    'International exchange':  118,
+    'Curriculum':              175,
+    'Evidence':                238,
+    'Teacher training':        198,
+    'Entrepreneurship':        310,
+  },
+
+  // ── Preferred initiative angles — adjust after visual inspection ─────────
+  // The adaptive resolver will honour these where possible and nudge
+  // neighbouring initiatives away if they overlap.
+  INIT_PREFERRED: {
+    'Menzies Oration':                          322,
+    'Australasian leadership initiative':       303,
+    'Indigenous women entreneurship initiative':289,
+    'Menzies School Leadership Incubator':      183,
+    'Complexity Leadership Lab':                222,
+    'Australian Leadership Index':              203,
+  },
+};
+// ══════════════════════════════════════════════════════════════════════════
+
+const CC=CONFIG.COLOURS;
+// ═══════════════════════════════════════════════════════════════════════
+
+const ELEMENTS_URL    = CONFIG.CSV_ELEMENTS;
+const CONNECTIONS_URL = CONFIG.CSV_CONNECTIONS;
+// ═══════════════════════════════════════════════════════════════════════
 
 // Offline fallback (last-known-good snapshot)
 const FALLBACK_ELEMENTS    = FALLBACK_EL_PLACEHOLDER;
@@ -366,15 +444,25 @@ function buildConnections(rows) {
 }
 
 async function loadSheetData() {
+  // Skip network fetch when not served over http/https —
+  // covers file://, C:\ paths on Windows, and any local opening method.
+  const proto = window.location.protocol;
+  const isLocal = proto === 'file:' || proto === 'blob:' || (proto !== 'http:' && proto !== 'https:');
+  if (isLocal) {
+    console.log('Local origin (' + proto + ') — using embedded fallback data');
+    ELEMENTS    = FALLBACK_ELEMENTS;
+    CONNECTIONS = FALLBACK_CONNECTIONS;
+    return {ok: false, error: 'file://'};
+  }
   try {
-    // Use XMLHttpRequest as fallback — more reliable from file:// origins than fetch()
+    // Use XMLHttpRequest — more reliable from file:// origins than fetch()
     function xhrGet(url) {
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open('GET', url, true);
-        xhr.timeout = 15000;
+        xhr.timeout = 8000;
         xhr.onload  = () => xhr.status >= 200 && xhr.status < 300 ? resolve(xhr.responseText) : reject(new Error('HTTP ' + xhr.status));
-        xhr.onerror = () => reject(new Error('Network error — are you online?'));
+        xhr.onerror = () => reject(new Error('Network error'));
         xhr.ontimeout = () => reject(new Error('Request timed out'));
         xhr.send();
       });
@@ -391,14 +479,13 @@ async function loadSheetData() {
     console.log('✓ Loaded live data:', Object.keys(ELEMENTS).length, 'elements,', CONNECTIONS.length, 'connections');
     return {ok: true};
   } catch(e) {
-    console.warn('Live data fetch failed:', e.message);
+    console.log('Live data fetch failed:', e.message);
     ELEMENTS    = FALLBACK_ELEMENTS;
     CONNECTIONS = FALLBACK_CONNECTIONS;
     return {ok: false, error: e.message};
   }
 }
 
-const CC={'Community resilience':'#3b9ede','Indigenous self-determination':'#e8b84a','Education outcomes':'#5cb85c','Youth development':'#e87c3e','Insight and influence':'#d9534f','':'#8898aa'};
 const SL=['Introduction','The Challenge','Lines of Inquiry','Full Network Map','Learn More'];
 
 async function init() {
@@ -411,9 +498,12 @@ async function init() {
   const statusEl = document.getElementById('load-status');
 
   if (!result.ok) {
-    statusEl.style.display = 'none'; // hide spinner on failure too
+    statusEl.style.display = 'none';
     msgEl.textContent = 'Using offline snapshot';
-    errEl.innerHTML = `(Cannot access latest data feed. Using last saved data set.)`;
+    const isOffline = result.error === 'file://';
+    errEl.innerHTML = isOffline
+      ? '(Viewing offline — using embedded data snapshot.)'
+      : '(Cannot access latest data feed. Using last saved data set.)';
     errEl.style.display = 'block';
   } else {
     statusEl.style.display = 'none'; // hide spinner once loaded
@@ -618,7 +708,9 @@ function buildLOI(){
   svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('width',W);svg.setAttribute('height',H);
   const mapLeft=300; // content starts right of 280px text box + gap
   const cx=mapLeft+(W-mapLeft)/2,nodes={};
-  const qLbls=['Purpose','Leadership of self','Leading with others','Leading in systems','Inter-cultural leadership','Developing leadership capability'];
+  // LOI labels derived from data — sorted by size so order is controlled via the sheet
+  const qLbls=Object.keys(ELEMENTS).filter(k=>ELEMENTS[k].type==='Level of Leadership')
+    .sort((a,b)=>(ELEMENTS[a].size||0)-(ELEMENTS[b].size||0));
   const qW=130,qH=52,qGap=14,qTW=qLbls.length*(qW+qGap)-qGap;
   // Left-justify question row starting at mapLeft+20
   const qLeft=mapLeft+20;
@@ -688,13 +780,13 @@ function buildLOI(){
   CONNECTIONS.forEach(c=>{if(c.type==='Partner'&&nodes[c.to]&&ELEMENTS[c.from]?.type==='Partner'){if(!partnerSet[c.from])partnerSet[c.from]=[];partnerSet[c.from].push(c.to);}});
   const allPartners=Object.keys(partnerSet).sort((a,b)=>a.localeCompare(b));
   const chipH2=20, chipRowH=26;
-  // Estimate column width from longest partner name (5.2px per char at font-size 9)
-  const maxNameLen=Math.max(...allPartners.map(p=>p.length),10);
-  const maxChipW=9+maxNameLen*5.2+7;
+  // Estimate chip widths from character count (g not yet in DOM here)
+  // Individual chips are measured precisely when drawn below
+  const maxChipW=9+Math.max(...allPartners.map(p=>p.length*5.5))+7;
   const colGap=12;
   const colW=Math.ceil(maxChipW)+colGap;
   const avail=W-mapLeft-40;
-  const maxColsByLOI=Math.floor(qTW/colW); // cap to LOI row width
+  const maxColsByLOI=Math.floor(qTW/colW);
   const pCols=Math.max(1,Math.min(Math.floor(avail/colW),maxColsByLOI));
   const pY=curY;
   allPartners.forEach((p,i)=>nodes[p]={x:mapLeft+20+(i%pCols)*colW, y:pY+(Math.floor(i/pCols))*chipRowH+chipH2/2, w:0, h:chipH2, isPart:true});
@@ -951,9 +1043,25 @@ function buildNet(){
   const panelW=280;
   const cx=(W-panelW)*.42,cy=H*.50,pos={};
   pos['FUTURE-FIT LEADERSHIP']={x:cx,y:cy};
-  const cohortAng={'Citizens':40,'Young people':130,'Teachers':220,'Indigenous women':310};
-  Object.entries(cohortAng).forEach(([k,deg])=>{const a=deg*Math.PI/180;pos[k]={x:cx+92*Math.sin(a),y:cy-92*Math.cos(a)};});
-  const lR=184;
+  // Cohort angles — manual map. Add new cohorts here when added to the sheet.
+  // Unknown cohorts fall back to evenly spaced positions.
+  const cohortAngMap=CONFIG.COHORT_ANGLES;
+  const cohortKeys=Object.keys(ELEMENTS).filter(k=>ELEMENTS[k].type==='Cohort');
+  const cohortAng={};
+  // Assign manual angles first, then place unknowns in gaps
+  cohortKeys.forEach(k=>{if(cohortAngMap[k]!=null)cohortAng[k]=cohortAngMap[k];});
+  const unknownCohorts=cohortKeys.filter(k=>cohortAngMap[k]==null);
+  if(unknownCohorts.length){
+    const usedAngs=Object.values(cohortAng).sort((a,b)=>a-b);
+    const step=360/cohortKeys.length;
+    unknownCohorts.forEach((k,i)=>{
+      // Place in the largest gap between existing angles
+      let bestAng=usedAngs.length?(usedAngs[usedAngs.length-1]+step)%360:i*step;
+      cohortAng[k]=bestAng; usedAngs.push(bestAng); usedAngs.sort((a,b)=>a-b);
+    });
+  }
+  Object.entries(cohortAng).forEach(([k,deg])=>{const a=deg*Math.PI/180;pos[k]={x:cx+CONFIG.R_COHORT*Math.sin(a),y:cy-CONFIG.R_COHORT*Math.cos(a)};});
+  const lR=CONFIG.R_LEVER;
   // Helper: place lever at angle, but push away from 270° (left) if within gap zone
   function lp(deg){
     const gap=30; // half-gap in degrees either side of 270°
@@ -965,8 +1073,28 @@ function buildNet(){
     }
     const a=deg*Math.PI/180;return{x:cx+lR*Math.sin(a),y:cy-lR*Math.cos(a)};
   }
-  pos['Media']=lp(360);pos['Culture']=lp(18);pos['Capability']=lp(36);pos['Capital']=lp(54);pos['Governance']=lp(72);
-  pos['International exchange']=lp(118);pos['Curriculum']=lp(175);pos['Evidence']=lp(238);pos['Teacher training']=lp(198);pos['Entrepreneurship']=lp(310);
+  // Lever angles — manual map. Add new levers here when added to the sheet.
+  // Unknown levers are placed automatically in the largest available gap.
+  const leverAngMap=CONFIG.LEVER_ANGLES;
+  const leverKeys=Object.keys(ELEMENTS).filter(k=>ELEMENTS[k].type==='Lever');
+  const leverAngAssigned={};
+  leverKeys.forEach(k=>{if(leverAngMap[k]!=null)leverAngAssigned[k]=leverAngMap[k];});
+  // Place any unknown levers in the largest available gap
+  const unknownLevers=leverKeys.filter(k=>leverAngMap[k]==null);
+  if(unknownLevers.length){
+    const usedAngs=Object.values(leverAngAssigned).sort((a,b)=>a-b);
+    unknownLevers.forEach(k=>{
+      let bestGap=0,bestAng=0;
+      for(let i=0;i<usedAngs.length;i++){
+        const next=usedAngs[(i+1)%usedAngs.length];
+        const gap=((next-usedAngs[i])+360)%360;
+        if(gap>bestGap){bestGap=gap;bestAng=(usedAngs[i]+gap/2+360)%360;}
+      }
+      leverAngAssigned[k]=bestAng;
+      usedAngs.push(bestAng);usedAngs.sort((a,b)=>a-b);
+    });
+  }
+  leverKeys.forEach(k=>{pos[k]=lp(leverAngAssigned[k]||0);});
   pos['Innovation']={x:cx-320,y:cy-180};pos['Insight']={x:cx-300,y:cy-120};pos['Influence']={x:cx-280,y:cy-55};
   pos['Cohorts and levers']={x:cx-180,y:cy};pos['Initiatives and outputs']={x:cx-280,y:cy};
 
@@ -995,18 +1123,16 @@ function buildNet(){
     return angs;
   }
   const initKeys=Object.keys(ELEMENTS).filter(k=>ELEMENTS[k].type==='Initiative');
-  const initAngs=placeCircle(initKeys,276,270,36); // gap at 270° (left) for 'Initiatives & outputs' label
+  const initAngs=placeCircle(initKeys,CONFIG.R_INITIATIVE,CONFIG.GAP_CENTRE,36); // gap at 270° (left) for 'Initiatives & outputs' label
 
   // ── Adaptive initiative positioning ────────────────────────────────────
   // Preferred angles from visual inspection. Applied only if they don't
   // cause overlap with auto-placed initiatives. When new data is added,
   // the system detects conflicts and spreads elements to avoid them.
-  const initPreferred={'Menzies Oration':322,'Australasian leadership initiative':303,
-    'Indigenous women entreneurship initiative':289,'Menzies School Leadership Incubator':183,
-    'Complexity Leadership Lab':222,'Australian Leadership Index':203};
+  const initPreferred=CONFIG.INIT_PREFERRED;
 
-  const minInitSep=18; // minimum degrees between any two initiatives
-  const initR=276;
+  const minInitSep=CONFIG.MIN_INIT_SEP;
+  const initR=CONFIG.R_INITIATIVE;
 
   // Step 1: apply preferred angles for known initiatives (if they exist in data)
   Object.entries(initPreferred).forEach(([k,deg])=>{
@@ -1043,7 +1169,7 @@ function buildNet(){
   resolveOverlaps(initAngs, initPreferred, minInitSep);
 
   // Step 4: ensure no initiative lands in the 270° gap zone after resolution
-  const gapCentre=270, gapHalfInit=18;
+  const gapCentre=CONFIG.GAP_CENTRE, gapHalfInit=CONFIG.GAP_HALF_INIT;
   Object.keys(initAngs).forEach(k=>{
     let deg=initAngs[k];
     const dist=Math.min((deg-gapCentre+360)%360,(gapCentre-deg+360)%360);
@@ -1074,8 +1200,8 @@ function buildNet(){
     if(!outByParent[ang])outByParent[ang]=[];
     outByParent[ang].push(ok);
   });
-  const outGapCentre=270,outGapHalf=28;
-  const minOutSep=7; // degrees minimum between adjacent outputs
+  const outGapCentre=CONFIG.GAP_CENTRE,outGapHalf=CONFIG.GAP_HALF_OUT;
+  const minOutSep=CONFIG.MIN_OUT_SEP;
   const spreadStep=minOutSep;
   const outAngs={};
   // Initial placement: centre each group on parent angle
@@ -1098,7 +1224,7 @@ function buildNet(){
       outAngs[k]=deg;
     }
     const a=deg*Math.PI/180;
-    pos[k]={x:cx+368*Math.sin(a),y:cy-368*Math.cos(a)};
+    pos[k]={x:cx+CONFIG.R_OUTPUT*Math.sin(a),y:cy-CONFIG.R_OUTPUT*Math.cos(a)};
   });
 
   // Partners in right column — beyond output ring
@@ -1160,7 +1286,7 @@ function buildNet(){
 
     // Quadratic bezier: control point pulled towards map centre (cx,cy)
     const mx=(ef.x+et.x)/2, my=(ef.y+et.y)/2;
-    const pull=0.10;
+    const pull=CONFIG.LINE_PULL;
     const qx=mx+pull*(cx-mx), qy=my+pull*(cy-my);
     const path=svgEl('path',{
       d:`M${ef.x},${ef.y} Q${qx},${qy} ${et.x},${et.y}`,
@@ -1179,6 +1305,18 @@ function buildNet(){
     else showTT(label,window.innerWidth*.5,window.innerHeight*.4);
     const conn=new Set([label]);
     CONNECTIONS.forEach(c=>{if(c.from===label||c.to===label){conn.add(c.from);conn.add(c.to);}});
+    // If a Partner is clicked, also illuminate Levers connected to its initiatives
+    if(ELEMENTS[label]?.type==='Partner'){
+      const initiatives=[...conn].filter(k=>ELEMENTS[k]?.type==='Initiative');
+      initiatives.forEach(init=>{
+        CONNECTIONS.forEach(c=>{
+          if((c.from===init||c.to===init)){
+            const other=c.from===init?c.to:c.from;
+            if(ELEMENTS[other]?.type==='Lever')conn.add(other);
+          }
+        });
+      });
+    }
     edgeG.querySelectorAll('path').forEach(l=>{
       const f=l.getAttribute('data-from'),t=l.getAttribute('data-to');
       const ok=conn.has(f)&&conn.has(t);
@@ -1199,7 +1337,8 @@ function buildNet(){
         l.setAttribute('stroke-width','0.5');
       }
     });
-    nodeG.querySelectorAll('g').forEach(n=>n.style.opacity=conn.has(n.dataset.label)?'1':'0.07');
+    const permanent=new Set(['FUTURE-FIT LEADERSHIP','Cohorts and levers','Initiatives and outputs']);
+    nodeG.querySelectorAll('g').forEach(n=>n.style.opacity=(conn.has(n.dataset.label)||permanent.has(n.dataset.label))?'1':'0.07');
   }
   netResetFn=function(){
     edgeG.querySelectorAll('path').forEach(l=>{
@@ -1574,12 +1713,24 @@ function buildNet(){
     }
   };
 } // end init()
-init();
+init().catch(e => {
+  console.log('Init failed:', e);
+  // Last resort — if init throws, use fallback and force-show the enter button
+  ELEMENTS    = FALLBACK_ELEMENTS;
+  CONNECTIONS = FALLBACK_CONNECTIONS;
+  const eb = document.getElementById('enter-btn');
+  const st = document.getElementById('load-status');
+  const er = document.getElementById('load-err');
+  const mg = document.getElementById('load-msg');
+  if(st) st.style.display='none';
+  if(mg) mg.textContent='Using offline snapshot';
+  if(er){er.innerHTML='(Viewing offline — using embedded data snapshot.)';er.style.display='block';}
+  if(eb) eb.style.display='block';
+});
 </script>
 </body></html>'''
 
-HTML = HTML.replace('ELEMENTS_URL_PLACEHOLDER', ELEMENTS_URL) \
-           .replace('CONNECTIONS_URL_PLACEHOLDER', CONNECTIONS_URL) \
+HTML = HTML \
            .replace('FALLBACK_EL_PLACEHOLDER', FALLBACK_EL_JS) \
            .replace('FALLBACK_CN_PLACEHOLDER', FALLBACK_CN_JS)
 with open('/home/claude/mlf-final.html','w') as f: f.write(HTML)
